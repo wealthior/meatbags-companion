@@ -6,7 +6,6 @@ import { isValidSolanaAddress } from "@/lib/utils/validation";
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const ownerAddress = searchParams.get("owner");
-  const page = parseInt(searchParams.get("page") ?? "1", 10);
 
   if (!ownerAddress || !isValidSolanaAddress(ownerAddress)) {
     return NextResponse.json(
@@ -16,7 +15,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { HELIUS_API_KEY } = getServerEnv();
-  const result = await fetchNftsByOwner(HELIUS_API_KEY, ownerAddress, page);
+  const result = await fetchNftsByOwner(HELIUS_API_KEY, ownerAddress);
 
   if (!result.success) {
     return NextResponse.json(result, { status: 502 });

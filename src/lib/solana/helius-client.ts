@@ -92,55 +92,61 @@ const parseHeliusAsset = (asset: HeliusAsset): MeatbagNft | null => {
 };
 
 /**
- * Fetch all MeatBag NFTs owned by a wallet address using Helius DAS API
+ * Fetch all MeatBag NFTs owned by a wallet address using Helius DAS searchAssets.
+ * Uses collection grouping filter so only MeatBags are returned server-side,
+ * and paginates automatically to capture all results.
  */
 export const fetchNftsByOwner = async (
   apiKey: string,
   ownerAddress: string,
-  page = 1,
-  limit = 1000
-): Promise<ApiResult<{ items: MeatbagNft[]; total: number; page: number }>> => {
-  try {
-    const response = await fetch(heliusDasUrl(apiKey), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "meatbags-companion",
-        method: "getAssetsByOwner",
-        params: {
-          ownerAddress,
-          page,
-          limit,
-          displayOptions: {
-            showFungible: false,
-            showNativeBalance: false,
-            showCollectionMetadata: true,
-          },
-        },
-      }),
-    });
+): Promise<ApiResult<{ items: MeatbagNft[]; total: number }>> => {
+  const PAGE_LIMIT = 1000;
 
-    if (!response.ok) {
-      reportHeliusFailure();
-      return err("HELIUS_UNAVAILABLE", `Helius API error: ${response.status}`, true);
+  try {
+    const allNfts: MeatbagNft[] = [];
+    let page = 1;
+
+    while (true) {
+      const response = await fetch(heliusDasUrl(apiKey), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: "meatbags-companion",
+          method: "searchAssets",
+          params: {
+            ownerAddress,
+            grouping: ["collection", COLLECTION_ADDRESS],
+            page,
+            limit: PAGE_LIMIT,
+            displayOptions: {
+              showFungible: false,
+              showNativeBalance: false,
+            },
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        reportHeliusFailure();
+        return err("HELIUS_UNAVAILABLE", `Helius API error: ${response.status}`, true);
+      }
+
+      const data: HeliusDasResponse = await response.json();
+      reportHeliusSuccess();
+
+      const nfts = data.result.items
+        .map(parseHeliusAsset)
+        .filter((nft): nft is MeatbagNft => nft !== null);
+
+      allNfts.push(...nfts);
+
+      // Stop when we got fewer items than the limit (last page)
+      if (data.result.items.length < PAGE_LIMIT) break;
+      page++;
     }
 
-    const data: HeliusDasResponse = await response.json();
-    reportHeliusSuccess();
-
-    // Filter to only MeatBags collection
-    const meatbagAssets = data.result.items.filter((asset) =>
-      asset.grouping?.some(
-        (g) => g.group_key === "collection" && g.group_value === COLLECTION_ADDRESS
-      )
-    );
-
-    const nfts = meatbagAssets
-      .map(parseHeliusAsset)
-      .filter((nft): nft is MeatbagNft => nft !== null);
-
-    return ok({ items: nfts, total: nfts.length, page });
+    return ok({ items: allNfts, total: allNfts.length });
   } catch (error) {
     reportHeliusFailure();
     return err(
