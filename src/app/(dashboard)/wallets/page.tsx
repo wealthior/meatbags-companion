@@ -103,34 +103,36 @@ export default function WalletsPage() {
 
           {/* Manual Entry */}
           <div className="space-y-2">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="Vault Name"
-                className="w-32 bg-bg-primary border border-border-default rounded-md px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-green/30"
+                className="w-full sm:w-28 bg-bg-primary border border-border-default rounded-md px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-green/30"
               />
-              <input
-                type="text"
-                value={newAddress}
-                onChange={(e) => {
-                  setNewAddress(e.target.value);
-                  setAddressError("");
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleAddManual()}
-                placeholder="Solana wallet address"
-                className={cn(
-                  "flex-1 bg-bg-primary border rounded-md px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-green/30",
-                  addressError ? "border-blood" : "border-border-default"
-                )}
-              />
-              <button
-                onClick={handleAddManual}
-                className="px-3 py-2 rounded-md text-xs bg-rust/10 border border-rust/30 text-rust hover:bg-rust/20 transition-colors cursor-pointer"
-              >
-                <Plus size={14} />
-              </button>
+              <div className="flex gap-2 flex-1">
+                <input
+                  type="text"
+                  value={newAddress}
+                  onChange={(e) => {
+                    setNewAddress(e.target.value);
+                    setAddressError("");
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddManual()}
+                  placeholder="Solana wallet address"
+                  className={cn(
+                    "flex-1 bg-bg-primary border rounded-md px-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-green/30",
+                    addressError ? "border-blood" : "border-border-default"
+                  )}
+                />
+                <button
+                  onClick={handleAddManual}
+                  className="px-3 py-2 rounded-md text-xs bg-rust/10 border border-rust/30 text-rust hover:bg-rust/20 transition-colors cursor-pointer"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
             </div>
             {addressError && (
               <p className="text-blood text-[10px]">{addressError}</p>
@@ -156,7 +158,7 @@ export default function WalletsPage() {
             {wallets.map((wallet) => (
               <div
                 key={wallet.address}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-bg-hover/30 transition-colors"
+                className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 hover:bg-bg-hover/30 transition-colors"
               >
                 {/* Status indicator */}
                 <div
@@ -209,7 +211,7 @@ export default function WalletsPage() {
                 {/* Connection status */}
                 <span
                   className={cn(
-                    "text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0",
+                    "text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 hidden sm:inline-block",
                     wallet.isConnected
                       ? "bg-neon-green/10 text-neon-green border border-neon-green/20"
                       : "bg-bg-hover text-text-muted border border-border-default"

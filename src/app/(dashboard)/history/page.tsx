@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Repeat, Sparkles } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Repeat, Sparkles, ExternalLink } from "lucide-react";
 import { useAllTransactions } from "@/hooks/use-transaction-history";
 import { useSolPrice } from "@/hooks/use-sol-price";
 import { GlitchText } from "@/components/shared/glitch-text";
@@ -47,21 +47,21 @@ export default function HistoryPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border-default text-[10px] text-text-muted uppercase tracking-wider">
-                <th className="text-left px-4 py-3">Type</th>
-                <th className="text-left px-4 py-3">NFT</th>
-                <th className="text-right px-4 py-3">SOL Amount</th>
-                <th className="text-right px-4 py-3">USD Value</th>
-                <th className="text-left px-4 py-3">From</th>
-                <th className="text-left px-4 py-3">To</th>
-                <th className="text-left px-4 py-3">Marketplace</th>
-                <th className="text-right px-4 py-3">Date</th>
+              <tr className="border-b border-border-default text-[10px] text-text-secondary uppercase tracking-wider">
+                <th className="text-left px-2 sm:px-4 py-3">Type</th>
+                <th className="text-left px-2 sm:px-4 py-3">NFT</th>
+                <th className="text-right px-2 sm:px-4 py-3">SOL</th>
+                <th className="text-right px-2 sm:px-4 py-3 hidden sm:table-cell">USD</th>
+                <th className="text-left px-2 sm:px-4 py-3 hidden md:table-cell">From</th>
+                <th className="text-left px-2 sm:px-4 py-3 hidden md:table-cell">To</th>
+                <th className="text-left px-2 sm:px-4 py-3 hidden lg:table-cell">Marketplace</th>
+                <th className="text-right px-2 sm:px-4 py-3">Date</th>
               </tr>
             </thead>
             <tbody>
               {txns.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-text-muted text-sm">
+                  <td colSpan={8} className="text-center py-8 sm:py-12 text-text-muted text-sm">
                     No transactions found in the wasteland.
                   </td>
                 </tr>
@@ -78,36 +78,40 @@ export default function HistoryPage() {
                   return (
                     <tr
                       key={tx.signature}
-                      className="border-b border-border-default/50 hover:bg-bg-hover/30 transition-colors"
+                      className="border-b border-border-default/50 hover:bg-bg-hover/30 transition-colors group cursor-pointer"
+                      onClick={() => window.open(`https://solscan.io/tx/${tx.signature}`, "_blank")}
                     >
-                      <td className="px-4 py-2">
+                      <td className="px-2 sm:px-4 py-2">
                         <div className="flex items-center gap-1.5">
                           <Icon size={12} className={config.color} />
-                          <span className={cn("text-xs font-medium", config.color)}>
+                          <span className={cn("text-[10px] sm:text-xs font-medium", config.color)}>
                             {config.label}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-2 text-xs text-text-secondary">
+                      <td className="px-2 sm:px-4 py-2 text-[10px] sm:text-xs text-text-secondary truncate max-w-[100px] sm:max-w-none">
                         {tx.nftName || shortenAddress(tx.mintAddress, 6)}
                       </td>
-                      <td className="text-right px-4 py-2 text-xs text-text-primary font-medium">
+                      <td className="text-right px-2 sm:px-4 py-2 text-[10px] sm:text-xs text-text-primary font-medium">
                         {formatSol(tx.solAmount)}
                       </td>
-                      <td className="text-right px-4 py-2 text-xs text-text-muted">
+                      <td className="text-right px-2 sm:px-4 py-2 text-xs text-text-muted hidden sm:table-cell">
                         {usdValue > 0 ? formatUsd(usdValue) : "—"}
                       </td>
-                      <td className="px-4 py-2 text-[10px] text-text-muted font-mono">
+                      <td className="px-2 sm:px-4 py-2 text-[10px] text-text-muted font-mono hidden md:table-cell">
                         {tx.fromWallet ? shortenAddress(tx.fromWallet) : "—"}
                       </td>
-                      <td className="px-4 py-2 text-[10px] text-text-muted font-mono">
+                      <td className="px-2 sm:px-4 py-2 text-[10px] text-text-muted font-mono hidden md:table-cell">
                         {tx.toWallet ? shortenAddress(tx.toWallet) : "—"}
                       </td>
-                      <td className="px-4 py-2 text-[10px] text-text-muted">
+                      <td className="px-2 sm:px-4 py-2 text-[10px] text-text-muted hidden lg:table-cell">
                         {tx.marketplace}
                       </td>
-                      <td className="text-right px-4 py-2 text-[10px] text-text-muted">
-                        {formatDateTime(tx.timestamp)}
+                      <td className="text-right px-2 sm:px-4 py-2 text-[10px] text-text-muted">
+                        <span className="flex items-center justify-end gap-1">
+                          {formatDateTime(tx.timestamp)}
+                          <ExternalLink size={9} className="opacity-0 group-hover:opacity-100 text-neon-green transition-opacity" />
+                        </span>
                       </td>
                     </tr>
                   );

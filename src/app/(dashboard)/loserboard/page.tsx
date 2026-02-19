@@ -50,7 +50,7 @@ export default function LoserboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
           label="Dead Points"
           value={formatNumber(stats.deadPoints)}
@@ -79,12 +79,12 @@ export default function LoserboardPage() {
       </div>
 
       {/* Tier Progress */}
-      <div className="bg-bg-surface border border-border-default rounded-lg p-4">
-        <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-4">
+      <div className="bg-bg-surface border border-border-default rounded-lg p-3 sm:p-4">
+        <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-3 sm:mb-4">
           Tier Progress
         </h3>
 
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {TIER_CONFIGS.map((tier) => {
             const isCurrentTier = tier.tier === stats.currentTier;
             const isAchieved = stats.deadPoints >= tier.minPoints;
@@ -138,11 +138,11 @@ export default function LoserboardPage() {
             Earned Badges ({earnedBadges.length})
           </h3>
         </div>
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
           {earnedBadges.map(({ badge, count }) => (
             <div
               key={badge.id}
-              className="flex items-center gap-3 p-3 rounded-lg bg-neon-green/5 border border-neon-green/20"
+              className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-neon-green/5 border border-neon-green/20"
             >
               <div className="w-8 h-8 rounded-full bg-neon-green/10 flex items-center justify-center text-neon-green">
                 <Star size={14} />
@@ -176,12 +176,12 @@ export default function LoserboardPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border-default text-[10px] text-text-muted uppercase tracking-wider">
-                <th className="text-left px-4 py-2">Badge</th>
-                <th className="text-left px-4 py-2">Description</th>
-                <th className="text-right px-4 py-2">Points</th>
-                <th className="text-center px-4 py-2">Type</th>
-                <th className="text-center px-4 py-2">Status</th>
+              <tr className="border-b border-border-default text-[10px] text-text-secondary uppercase tracking-wider">
+                <th className="text-left px-2 sm:px-4 py-2">Badge</th>
+                <th className="text-left px-2 sm:px-4 py-2 hidden sm:table-cell">Description</th>
+                <th className="text-right px-2 sm:px-4 py-2">Points</th>
+                <th className="text-center px-2 sm:px-4 py-2">Type</th>
+                <th className="text-center px-2 sm:px-4 py-2">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -199,16 +199,16 @@ export default function LoserboardPage() {
                         : "opacity-50"
                     )}
                   >
-                    <td className="px-4 py-2 text-xs text-text-primary font-medium">
+                    <td className="px-2 sm:px-4 py-2 text-xs text-text-primary font-medium">
                       {badge.name}
                     </td>
-                    <td className="px-4 py-2 text-[10px] text-text-muted">
+                    <td className="px-2 sm:px-4 py-2 text-[10px] text-text-muted hidden sm:table-cell">
                       {badge.description}
                     </td>
-                    <td className="text-right px-4 py-2 text-xs text-text-secondary">
+                    <td className="text-right px-2 sm:px-4 py-2 text-xs text-text-secondary">
                       {formatNumber(badge.points)}
                     </td>
-                    <td className="text-center px-4 py-2">
+                    <td className="text-center px-2 sm:px-4 py-2">
                       <span
                         className={cn(
                           "text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider",
@@ -220,7 +220,7 @@ export default function LoserboardPage() {
                         {badge.isStackable ? "Stack" : "Once"}
                       </span>
                     </td>
-                    <td className="text-center px-4 py-2 text-xs">
+                    <td className="text-center px-2 sm:px-4 py-2 text-xs">
                       {earned ? (
                         <span className="text-neon-green">
                           {earned.count > 1 ? `x${earned.count}` : "✓"}

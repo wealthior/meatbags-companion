@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useWalletStore } from "@/stores/wallet-store";
 import { isValidSolanaAddress } from "@/lib/utils/validation";
 import { cn } from "@/lib/utils/cn";
@@ -87,26 +88,63 @@ export default function LandingPage() {
         transition={{ duration: 0.8 }}
         className="relative z-10 w-full max-w-lg mx-4"
       >
-        {/* Logo / Title */}
-        <div className="text-center mb-10">
-          <motion.h1
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-5xl font-bold tracking-tighter text-text-primary mb-2"
-          >
-            <span className="text-neon-green text-glow-green">MEAT</span>
-            <span className="text-rust">BAGS</span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-text-muted text-sm uppercase tracking-[0.3em]"
-          >
-            Companion Terminal
-          </motion.p>
-        </div>
+        {/* FAMINE character */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.4, y: 40 }}
+          animate={{
+            opacity: [0, 1, 0.8, 1],
+            scale: [0.4, 1.05, 0.97, 1],
+            y: [40, -5, 2, 0],
+          }}
+          transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
+          className="relative w-40 h-40 mx-auto mb-2"
+        >
+          <motion.div
+            animate={{ opacity: [0.2, 0.5, 0.2] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 rounded-full bg-[radial-gradient(circle,_rgba(57,255,20,0.15)_0%,_transparent_70%)] blur-xl scale-125"
+          />
+          <Image
+            src="/famine_transparent.png"
+            alt="FAMINE"
+            fill
+            className="object-contain drop-shadow-[0_0_30px_rgba(57,255,20,0.2)] relative z-10"
+            priority
+          />
+        </motion.div>
+
+        {/* Logo + text */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="flex items-center justify-center gap-3 mb-2"
+        >
+          <Image
+            src="/meatbags-logo_transparent.png"
+            alt="MeatBags Logo"
+            width={40}
+            height={40}
+            priority
+          />
+          <Image
+            src="/meatbags-text-logo.png"
+            alt="MeatBags"
+            width={170}
+            height={40}
+            className="object-contain"
+            priority
+          />
+        </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="text-text-muted text-sm uppercase tracking-[0.3em] text-center mb-8"
+        >
+          Companion Terminal
+        </motion.p>
 
         {/* Main card */}
         <motion.div
