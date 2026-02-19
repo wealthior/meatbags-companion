@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ExternalLink, Lock, Zap } from "lucide-react";
+import { ExternalLink, Lock, Tag, Zap } from "lucide-react";
+import { formatSol } from "@/lib/utils/format";
 import type { MeatbagNft } from "@/types/nft";
 import { TraitBadge } from "./trait-badge";
 import { getMaskHexColor } from "@/lib/domain/traits";
@@ -88,6 +89,12 @@ export function NftCard({ nft }: NftCardProps) {
               Staked
             </div>
           )}
+          {nft.isListed && (
+            <div className="px-1.5 py-0.5 rounded bg-rust/90 text-[9px] text-white font-bold uppercase tracking-wider flex items-center gap-0.5 backdrop-blur-sm">
+              <Tag size={8} />
+              {nft.listingPriceSol ? formatSol(nft.listingPriceSol) : nft.listedMarketplace ?? "Listed"}
+            </div>
+          )}
         </div>
 
         {/* MagicEden link — slides up on hover */}
@@ -117,7 +124,11 @@ export function NftCard({ nft }: NftCardProps) {
         </div>
 
         <p className="text-[9px] text-text-muted truncate">
-          {shortenAddress(nft.ownerWallet, 6)}
+          {nft.isListed && nft.listedMarketplace ? (
+            <span className="text-rust">{nft.listedMarketplace}</span>
+          ) : (
+            shortenAddress(nft.ownerWallet, 6)
+          )}
         </p>
       </div>
 

@@ -12,12 +12,12 @@ import {
   ExternalLink,
   DollarSign,
   Lock,
+  Tag,
 } from "lucide-react";
 import { useAllNfts } from "@/hooks/use-nfts";
 import { useSolPrice } from "@/hooks/use-sol-price";
 import { useCollectionStats } from "@/hooks/use-collection-stats";
 import { useWalletStore } from "@/stores/wallet-store";
-import { calculateWalletPrepPoints, aggregateAcrossWallets } from "@/lib/domain/prep-points";
 import { calculateLoserboardStats } from "@/lib/domain/loserboard";
 import { getTraitDistribution } from "@/lib/domain/wallet-aggregator";
 import { MASK_COLOR_CONFIG, MAGICEDEN_COLLECTION_URL, TIER_CONFIGS } from "@/lib/utils/constants";
@@ -26,7 +26,6 @@ import { GlitchText } from "@/components/shared/glitch-text";
 import { TraitBadge } from "@/components/nft/trait-badge";
 import { PageLoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { formatNumber, formatSol, formatUsd } from "@/lib/utils/format";
-import { cn } from "@/lib/utils/cn";
 import type { MaskColor } from "@/types/nft";
 
 export default function DashboardPage() {
@@ -34,16 +33,6 @@ export default function DashboardPage() {
   const { data: solPrice } = useSolPrice();
   const { data: collectionStats } = useCollectionStats();
   const wallets = useWalletStore((s) => s.wallets);
-
-  const prepPointsAgg = useMemo(() => {
-    if (!nftData?.byWallet) return null;
-    const walletResults = wallets.map((w) => ({
-      walletAddress: w.address,
-      walletName: w.name,
-      points: calculateWalletPrepPoints(nftData.byWallet[w.address] ?? []),
-    }));
-    return aggregateAcrossWallets(walletResults);
-  }, [nftData, wallets]);
 
   const loserboardStats = useMemo(() => {
     if (!nftData?.nfts) return null;
@@ -54,6 +43,7 @@ export default function DashboardPage() {
     if (!nftData?.nfts) return [];
     return getTraitDistribution(nftData.nfts);
   }, [nftData]);
+
 
   if (wallets.length === 0) {
     return (
@@ -97,6 +87,9 @@ export default function DashboardPage() {
 
   const nfts = nftData?.nfts ?? [];
   const stakedCount = nfts.filter((n) => n.isStaked).length;
+  const listedNfts = nfts.filter((n) => n.isListed);
+  const listedCount = listedNfts.length;
+  const listedMarketplaces = [...new Set(listedNfts.map((n) => n.listedMarketplace).filter(Boolean))];
   const portfolioValueSol = nfts.length * (collectionStats?.floorPrice ?? 0);
   const portfolioValueUsd = portfolioValueSol * (solPrice?.usd ?? 0);
 
@@ -112,7 +105,7 @@ export default function DashboardPage() {
             </p>
           </div>
           {/* Achievement badges */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Billionaire badge — 20+ MeatBags */}
             {nfts.length >= 20 && (
               <div className="relative group cursor-default">
@@ -196,7 +189,7 @@ export default function DashboardPage() {
         <h3 className="text-[10px] text-neon-green uppercase tracking-widest font-bold">
           Your Wallets — {wallets.length} vault{wallets.length !== 1 ? "s" : ""}
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           <StatCard
             label="Total MeatBags"
             value={formatNumber(nfts.length)}
@@ -211,10 +204,11 @@ export default function DashboardPage() {
             accent="green"
           />
           <StatCard
-            label="Daily Prep Points"
-            value={formatNumber(prepPointsAgg?.projections.daily ?? 0)}
-            icon={Zap}
-            accent="gold"
+            label="Listed"
+            value={String(listedCount)}
+            subValue={listedMarketplaces.length > 0 ? listedMarketplaces.join(", ") : "None listed"}
+            icon={Tag}
+            accent="rust"
           />
           <StatCard
             label="Portfolio Value"

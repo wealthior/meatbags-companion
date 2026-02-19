@@ -61,23 +61,33 @@ export const BADGE_DEFINITIONS: readonly BadgeDefinition[] = [
   { id: "geocacher", name: "Geocacher", description: "Find your first geocache", points: 750, isStackable: false, category: "one-time" },
   { id: "rare_hunter", name: "Rare Hunter", description: "Own a rare trait MeatBag", points: 2_000, isStackable: false, category: "one-time" },
 
-  // Stackable badges (per trait/mask ownership)
-  { id: "mask_red", name: "Red Mask Owner", description: "Own a MeatBag with Red Mask", points: 75, isStackable: true, category: "stackable" },
-  { id: "mask_purple", name: "Purple Mask Owner", description: "Own a MeatBag with Purple Mask", points: 100, isStackable: true, category: "stackable" },
-  { id: "mask_orange", name: "Orange Mask Owner", description: "Own a MeatBag with Orange Mask", points: 100, isStackable: true, category: "stackable" },
-  { id: "mask_white", name: "White Mask Owner", description: "Own a MeatBag with White Mask", points: 125, isStackable: true, category: "stackable" },
-  { id: "mask_yellow", name: "Yellow Mask Owner", description: "Own a MeatBag with Yellow Mask", points: 125, isStackable: true, category: "stackable" },
-  { id: "mask_green", name: "Green Mask Owner", description: "Own a MeatBag with Green Mask", points: 150, isStackable: true, category: "stackable" },
-  { id: "mask_teal", name: "Teal Mask Owner", description: "Own a MeatBag with Teal Mask", points: 150, isStackable: true, category: "stackable" },
-  { id: "mask_blue", name: "Blue Mask Owner", description: "Own a MeatBag with Blue Mask", points: 175, isStackable: true, category: "stackable" },
-  { id: "mask_black", name: "Black Mask Owner", description: "Own a MeatBag with Black Mask", points: 175, isStackable: true, category: "stackable" },
-  { id: "mask_pink", name: "Pink Mask Owner", description: "Own a MeatBag with Pink Mask", points: 200, isStackable: true, category: "stackable" },
-  { id: "mask_orchid", name: "Orchid Mask Owner", description: "Own a MeatBag with Orchid Mask", points: 250, isStackable: true, category: "stackable" },
-  { id: "mask_navy", name: "Navy Mask Owner", description: "Own a MeatBag with Navy Mask", points: 250, isStackable: true, category: "stackable" },
-  { id: "mask_brown", name: "Brown Mask Owner", description: "Own a MeatBag with Brown Mask", points: 300, isStackable: true, category: "stackable" },
-  { id: "mask_gold", name: "Gold Mask Owner", description: "Own a MeatBag with Gold Mask", points: 1_500, isStackable: true, category: "stackable" },
-  { id: "mask_1of1", name: "1/1 Mask Owner", description: "Own a MeatBag with a 1/1 Mask", points: 7_000, isStackable: true, category: "stackable" },
-  { id: "mask_nothing", name: "Maskless Owner", description: "Own a MeatBag with No Mask", points: 7_700, isStackable: true, category: "stackable" },
+  // Stackable badges (per trait/mask ownership) — one per mask color
+  // Common masks
+  { id: "mask_red", name: "Red Mask", description: "Own a MeatBag with Red Mask", points: 75, isStackable: true, category: "stackable" },
+  { id: "mask_purple", name: "Purple Mask", description: "Own a MeatBag with Purple Mask", points: 75, isStackable: true, category: "stackable" },
+  { id: "mask_orange", name: "Orange Mask", description: "Own a MeatBag with Orange Mask", points: 75, isStackable: true, category: "stackable" },
+  { id: "mask_white", name: "White Mask", description: "Own a MeatBag with White Mask", points: 75, isStackable: true, category: "stackable" },
+  { id: "mask_yellow", name: "Yellow Mask", description: "Own a MeatBag with Yellow Mask", points: 75, isStackable: true, category: "stackable" },
+  { id: "mask_lightblue", name: "Light Blue Mask", description: "Own a MeatBag with Light Blue Mask", points: 75, isStackable: true, category: "stackable" },
+  { id: "mask_green", name: "Green Mask", description: "Own a MeatBag with Green Mask", points: 75, isStackable: true, category: "stackable" },
+  { id: "mask_teal", name: "Teal Mask", description: "Own a MeatBag with Teal Mask", points: 75, isStackable: true, category: "stackable" },
+  // Uncommon masks
+  { id: "mask_olive", name: "Olive Mask", description: "Own a MeatBag with Olive Mask", points: 125, isStackable: true, category: "stackable" },
+  { id: "mask_blue", name: "Blue Mask", description: "Own a MeatBag with Blue Mask", points: 125, isStackable: true, category: "stackable" },
+  { id: "mask_black", name: "Black Mask", description: "Own a MeatBag with Black Mask", points: 125, isStackable: true, category: "stackable" },
+  { id: "mask_burgundy", name: "Burgundy Mask", description: "Own a MeatBag with Burgundy Mask", points: 125, isStackable: true, category: "stackable" },
+  { id: "mask_grey", name: "Grey Mask", description: "Own a MeatBag with Grey Mask", points: 125, isStackable: true, category: "stackable" },
+  { id: "mask_pink", name: "Pink Mask", description: "Own a MeatBag with Pink Mask", points: 125, isStackable: true, category: "stackable" },
+  // Rare masks
+  { id: "mask_orchid", name: "Orchid Mask", description: "Own a MeatBag with Orchid Mask", points: 250, isStackable: true, category: "stackable" },
+  { id: "mask_navy", name: "Navy Mask", description: "Own a MeatBag with Navy Mask", points: 250, isStackable: true, category: "stackable" },
+  { id: "mask_brown", name: "Brown Mask", description: "Own a MeatBag with Brown Mask", points: 300, isStackable: true, category: "stackable" },
+  // Legendary masks
+  { id: "mask_ghgold", name: "GH-Gold Mask", description: "Own a MeatBag with GH-Gold Mask", points: 1_500, isStackable: true, category: "stackable" },
+  // Mythic masks
+  { id: "mask_1of1", name: "1/1 Mask", description: "Own a MeatBag with a 1/1 Mask", points: 7_000, isStackable: true, category: "stackable" },
+  { id: "mask_nothing", name: "Maskless", description: "Own a MeatBag with No Mask", points: 7_700, isStackable: true, category: "stackable" },
+  // Other stackable
   { id: "geocache_rare", name: "Rare Geocache", description: "Find a rare geocache item", points: 500, isStackable: true, category: "stackable" },
 ];
 
@@ -90,20 +100,20 @@ const MASK_BADGE_MAP: Record<string, string> = {
   Orange: "mask_orange",
   White: "mask_white",
   Yellow: "mask_yellow",
-  "Light Blue": "mask_blue",
+  "Light Blue": "mask_lightblue",
   Green: "mask_green",
   Teal: "mask_teal",
-  Olive: "mask_green",
+  Olive: "mask_olive",
   Blue: "mask_blue",
   Black: "mask_black",
-  Burgundy: "mask_red",
-  Grey: "mask_black",
+  Burgundy: "mask_burgundy",
+  Grey: "mask_grey",
   Pink: "mask_pink",
   Orchid: "mask_orchid",
   Navy: "mask_navy",
   Brown: "mask_brown",
-  Gold: "mask_gold",
-  "GH-Gold": "mask_gold",
+  Gold: "mask_ghgold",
+  "GH-Gold": "mask_ghgold",
   "1/1": "mask_1of1",
   Nothing: "mask_nothing",
 };
@@ -141,15 +151,51 @@ export const calculateDeadPoints = (badges: readonly EarnedBadge[]): number =>
   badges.reduce((total, { badge, count }) => total + badge.points * count, 0);
 
 /**
+ * Auto-detect one-time badges that can be determined from NFT data alone.
+ * Badges like Shitlord, Raider, OG Holder etc. need external verification.
+ */
+const calculateAutoOneTimeBadges = (nfts: readonly MeatbagNft[]): string[] => {
+  const earned: string[] = [];
+  if (nfts.length === 0) return earned;
+
+  const maskRarities = new Set(nfts.map((n) => MASK_COLOR_CONFIG[n.maskColor]?.rarity));
+  const totalDailyYield = nfts.reduce((s, n) => s + (MASK_COLOR_CONFIG[n.maskColor]?.dailyYield ?? 0), 0);
+  const hasStaked = nfts.some((n) => n.isStaked);
+  const hasListed = nfts.some((n) => n.isListed);
+
+  // Collectoor — own at least 1 MeatBag
+  if (nfts.length >= 1) earned.push("collectoor");
+  // Staker — at least 1 staked
+  if (hasStaked) earned.push("staker");
+  // Whale — 50+ MeatBags
+  if (nfts.length >= 50) earned.push("whale");
+  // Hoarder — 100+ MeatBags
+  if (nfts.length >= 100) earned.push("hoarder");
+  // Rare Hunter — owns Rare, Legendary, or Mythic mask
+  if (maskRarities.has("Rare") || maskRarities.has("Legendary") || maskRarities.has("Mythic")) earned.push("rare_hunter");
+  // Preparer — 100K+ total daily yield
+  if (totalDailyYield >= 100_000) earned.push("preparer");
+  // Diamond Hands — 5+ NFTs, none listed
+  if (nfts.length >= 5 && !hasListed) earned.push("diamond_hands");
+
+  return earned;
+};
+
+/**
  * Calculate complete loserboard stats for a set of NFTs
  */
 export const calculateLoserboardStats = (
   nfts: readonly MeatbagNft[],
-  oneTimeBadgeIds: readonly string[] = []
+  manualBadgeIds: readonly string[] = []
 ): UserLoserboardStats => {
   const stackableBadges = calculateStackableBadges(nfts);
 
-  const oneTimeBadges: EarnedBadge[] = oneTimeBadgeIds
+  // Auto-detect one-time badges from NFT data
+  const autoBadgeIds = calculateAutoOneTimeBadges(nfts);
+  // Merge auto-detected + manually awarded (deduplicated)
+  const allOneTimeIds = [...new Set([...autoBadgeIds, ...manualBadgeIds])];
+
+  const oneTimeBadges: EarnedBadge[] = allOneTimeIds
     .map((id) => BADGE_DEFINITIONS.find((b) => b.id === id))
     .filter((b): b is BadgeDefinition => b !== undefined)
     .map((badge) => ({ badge, count: 1 }));

@@ -54,8 +54,18 @@ export interface MeatbagNft {
   readonly isSoulbound: boolean;
   readonly isStaked: boolean;
   readonly stakingProgram?: string;
+  readonly isListed: boolean;
+  readonly listedMarketplace?: string;
+  readonly listingPriceSol?: number;
   readonly dailyYield: number;
   readonly magicEdenUrl: string;
+}
+
+export interface NftListing {
+  readonly mintAddress: string;
+  readonly seller: string;
+  readonly priceSol: number;
+  readonly marketplace: string;
 }
 
 export interface CollectionStats {
