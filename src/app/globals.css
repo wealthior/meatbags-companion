@@ -1,0 +1,298 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════
+   MEATBAGS COMPANION — APOCALYPTIC DEGEN THEME
+   ═══════════════════════════════════════════════ */
+
+@theme {
+  /* Background tones */
+  --color-bg-void: #050506;
+  --color-bg-primary: #0a0a0b;
+  --color-bg-surface: #141416;
+  --color-bg-elevated: #1c1c1f;
+  --color-bg-hover: #222226;
+
+  /* Accent colors */
+  --color-neon-green: #39ff14;
+  --color-neon-green-dim: #1a7a0a;
+  --color-rust: #c45a20;
+  --color-rust-dim: #8b3a10;
+  --color-toxic-purple: #9b30ff;
+  --color-toxic-purple-dim: #5a1a99;
+  --color-gold: #ffd700;
+  --color-gold-dim: #997f00;
+  --color-blood: #8b0000;
+  --color-blood-dim: #4a0000;
+
+  /* Text colors */
+  --color-text-primary: #e8e3d9;
+  --color-text-secondary: #9b9688;
+  --color-text-muted: #6b6860;
+  --color-text-accent: #39ff14;
+
+  /* Tier colors */
+  --color-tier-bronze: #cd7f32;
+  --color-tier-silver: #c0c0c0;
+  --color-tier-gold: #ffd700;
+  --color-tier-platinum: #e5e4e2;
+  --color-tier-immortal: #9b30ff;
+
+  /* Border */
+  --color-border-default: #2a2a2e;
+  --color-border-accent: #39ff1433;
+  --color-border-rust: #c45a2033;
+
+  /* Font families */
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", ui-monospace, monospace;
+  --font-display: "JetBrains Mono", Impact, "Arial Black", sans-serif;
+}
+
+/* ── Base Styles ─────────────────────────────── */
+
+* {
+  border-color: var(--color-border-default);
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-mono);
+  background: var(--color-bg-void);
+  color: var(--color-text-primary);
+  overflow-x: hidden;
+}
+
+/* ── Film Grain Overlay ──────────────────────── */
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+/* ── Scanline Effect ─────────────────────────── */
+
+.scanlines::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+}
+
+/* ── Glitch Text Effect ──────────────────────── */
+
+@keyframes glitch-1 {
+  0%, 100% { clip-path: inset(0 0 95% 0); transform: translate(0); }
+  20% { clip-path: inset(20% 0 60% 0); transform: translate(-3px, 0); }
+  40% { clip-path: inset(50% 0 30% 0); transform: translate(3px, 0); }
+  60% { clip-path: inset(70% 0 10% 0); transform: translate(-2px, 0); }
+  80% { clip-path: inset(10% 0 80% 0); transform: translate(2px, 0); }
+}
+
+@keyframes glitch-2 {
+  0%, 100% { clip-path: inset(95% 0 0 0); transform: translate(0); }
+  20% { clip-path: inset(60% 0 20% 0); transform: translate(3px, 0); }
+  40% { clip-path: inset(30% 0 50% 0); transform: translate(-3px, 0); }
+  60% { clip-path: inset(10% 0 70% 0); transform: translate(2px, 0); }
+  80% { clip-path: inset(80% 0 10% 0); transform: translate(-2px, 0); }
+}
+
+.glitch {
+  position: relative;
+}
+
+.glitch:hover::before,
+.glitch:hover::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+}
+
+.glitch:hover::before {
+  color: var(--color-neon-green);
+  animation: glitch-1 0.3s infinite linear alternate-reverse;
+}
+
+.glitch:hover::after {
+  color: var(--color-rust);
+  animation: glitch-2 0.3s infinite linear alternate-reverse;
+}
+
+/* ── Radioactive Glow ────────────────────────── */
+
+.glow-green {
+  box-shadow:
+    0 0 5px var(--color-neon-green-dim),
+    0 0 20px rgba(57, 255, 20, 0.1);
+}
+
+.glow-green-strong {
+  box-shadow:
+    0 0 5px var(--color-neon-green),
+    0 0 20px rgba(57, 255, 20, 0.3),
+    0 0 40px rgba(57, 255, 20, 0.1);
+}
+
+.glow-gold {
+  box-shadow:
+    0 0 5px var(--color-gold-dim),
+    0 0 20px rgba(255, 215, 0, 0.15);
+}
+
+.glow-purple {
+  box-shadow:
+    0 0 5px var(--color-toxic-purple-dim),
+    0 0 20px rgba(155, 48, 255, 0.15);
+}
+
+.glow-rust {
+  box-shadow:
+    0 0 5px var(--color-rust-dim),
+    0 0 20px rgba(196, 90, 32, 0.15);
+}
+
+/* ── Text Glow ───────────────────────────────── */
+
+.text-glow-green {
+  text-shadow: 0 0 10px rgba(57, 255, 20, 0.5), 0 0 30px rgba(57, 255, 20, 0.2);
+}
+
+.text-glow-gold {
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.2);
+}
+
+/* ── Typewriter Effect ───────────────────────── */
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-cursor {
+  0%, 100% { border-color: var(--color-neon-green); }
+  50% { border-color: transparent; }
+}
+
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--color-neon-green);
+  animation:
+    typewriter 2s steps(30) 0.5s 1 normal both,
+    blink-cursor 0.8s step-end infinite;
+}
+
+/* ── Radiation Pulse ─────────────────────────── */
+
+@keyframes rad-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.rad-pulse {
+  animation: rad-pulse 2s ease-in-out infinite;
+}
+
+/* ── Distressed Border ───────────────────────── */
+
+.border-distressed {
+  border: 1px solid var(--color-border-default);
+  border-image: repeating-linear-gradient(
+    90deg,
+    var(--color-border-default) 0px,
+    var(--color-border-default) 4px,
+    transparent 4px,
+    transparent 6px
+  ) 1;
+}
+
+/* ── Scrollbar ───────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-hover);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neon-green-dim);
+}
+
+/* ── Selection ───────────────────────────────── */
+
+::selection {
+  background: rgba(57, 255, 20, 0.3);
+  color: var(--color-text-primary);
+}
+
+/* ── Custom Utilities ────────────────────────── */
+
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(57, 255, 20, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57, 255, 20, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.mask-fade-b {
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+
+/* ── Tailwind v4 Utility Definitions ───────── */
+/* @utility allows hover:/focus:/etc. prefix variants */
+
+@utility glow-green-strong {
+  box-shadow:
+    0 0 5px var(--color-neon-green),
+    0 0 20px rgba(57, 255, 20, 0.3),
+    0 0 40px rgba(57, 255, 20, 0.1);
+}
+
+@utility glow-green {
+  box-shadow:
+    0 0 5px var(--color-neon-green-dim),
+    0 0 20px rgba(57, 255, 20, 0.1);
+}
+
+@utility glow-gold {
+  box-shadow:
+    0 0 5px var(--color-gold-dim),
+    0 0 20px rgba(255, 215, 0, 0.15);
+}
+
+@utility glow-purple {
+  box-shadow:
+    0 0 5px var(--color-toxic-purple-dim),
+    0 0 20px rgba(155, 48, 255, 0.15);
+}
+
+@utility glow-rust {
+  box-shadow:
+    0 0 5px var(--color-rust-dim),
+    0 0 20px rgba(196, 90, 32, 0.15);
+}
