@@ -1,6 +1,6 @@
 "use client";
 
-import { Grid3X3, Zap, Wallet, ExternalLink } from "lucide-react";
+import { Grid3X3, Zap, Wallet, ExternalLink, Lock, Tag } from "lucide-react";
 import { useAllNfts } from "@/hooks/use-nfts";
 import { useWalletStore } from "@/stores/wallet-store";
 import { NftGrid } from "@/components/nft/nft-grid";
@@ -62,6 +62,9 @@ export default function CollectionPage() {
 
   // Count unique mask colors
   const uniqueMasks = new Set(nfts.map((n) => n.maskColor)).size;
+  const stakedCount = nfts.filter((n) => n.isStaked).length;
+  const listedCount = nfts.filter((n) => n.isListed).length;
+  const listedMarketplaces = [...new Set(nfts.filter((n) => n.isListed).map((n) => n.listedMarketplace).filter(Boolean))];
 
   return (
     <div className="space-y-6">
@@ -85,12 +88,26 @@ export default function CollectionPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         <StatCard
           label="Total MeatBags"
           value={formatNumber(nfts.length)}
           icon={Grid3X3}
           accent="green"
+        />
+        <StatCard
+          label="Staked"
+          value={`${stakedCount}/${nfts.length}`}
+          subValue={stakedCount > 0 ? `${Math.round((stakedCount / nfts.length) * 100)}% locked` : undefined}
+          icon={Lock}
+          accent="green"
+        />
+        <StatCard
+          label="Listed"
+          value={String(listedCount)}
+          subValue={listedMarketplaces.length > 0 ? listedMarketplaces.join(", ") : "None listed"}
+          icon={Tag}
+          accent="rust"
         />
         <StatCard
           label="Daily Prep Points"

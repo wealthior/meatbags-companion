@@ -52,7 +52,40 @@ interface HeliusAsset {
 }
 
 /**
- * Parse a Helius DAS asset into our MeatbagNft type
+ * Known marketplace program/delegate addresses.
+ * When an NFT's freeze delegate matches one of these, it's listed.
+ */
+const MARKETPLACE_DELEGATES: Record<string, string> = {
+  "1BWutmTvYPwDtmw9abTkS4Ssr8no61spGAvW1X6NDix": "Magic Eden",
+  "M2mx93ekt1fmXSVkTrUL9xVFHkmME8HTUi5Cyc5aF7K": "Magic Eden",
+  "MEisE1HzehtrDpAAT8PnLHjpSSkRYakotTuJRPjTpo8": "Magic Eden",
+  "mmm3XBJg5gk8XJxEKBvdgptZz6SgK4tXvn36sodowMc": "Magic Eden",
+  "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN": "Tensor",
+  "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp": "Tensor",
+  "TL1ST2iRBzuGTqLn1KXnGdSnEow62BzPnGiqyRXhWtW": "Tensor",
+  "hadeK9DLv9eA7ya5KCTqSvSvRZeJC3JgD5a9Y3CNbvu": "Hadeswap",
+};
+
+/**
+ * Detect marketplace listing from the delegate address
+ */
+const detectMarketplace = (delegate?: string): string | null => {
+  if (!delegate) return null;
+  return MARKETPLACE_DELEGATES[delegate] ?? null;
+};
+
+/**
+ * Check if a DAS asset belongs to the MeatBags collection.
+ * Strict match: only checks collection grouping address.
+ */
+const isMeatbagAsset = (asset: HeliusAsset): boolean =>
+  asset.grouping?.some(
+    (g) => g.group_key === "collection" && g.group_value === COLLECTION_ADDRESS
+  ) ?? false;
+
+/**
+ * Parse a Helius DAS asset into our MeatbagNft type.
+ * Detects delegate-based marketplace listings automatically.
  */
 const parseHeliusAsset = (asset: HeliusAsset): MeatbagNft | null => {
   try {
@@ -73,7 +106,11 @@ const parseHeliusAsset = (asset: HeliusAsset): MeatbagNft | null => {
     const maskColor = getMaskColorFromTraits(traits);
     const honorary = isHonoraryNft(name, traits);
     const soulbound = isSoulboundNft(name);
-    const isStaked = asset.ownership.frozen === true;
+    const delegate = asset.ownership.delegate;
+    const marketplace = detectMarketplace(delegate);
+    // Listed = has marketplace delegate. Staked = frozen WITHOUT marketplace delegate.
+    const isListed = marketplace !== null;
+    const isStaked = asset.ownership.frozen === true && !isListed;
 
     return {
       mintAddress: asset.id,
@@ -85,7 +122,9 @@ const parseHeliusAsset = (asset: HeliusAsset): MeatbagNft | null => {
       isHonorary: honorary,
       isSoulbound: soulbound,
       isStaked,
-      stakingProgram: isStaked ? asset.ownership.delegate : undefined,
+      stakingProgram: isStaked ? delegate : undefined,
+      isListed,
+      listedMarketplace: marketplace ?? undefined,
       dailyYield: getBaseYield(maskColor),
       magicEdenUrl: `${MAGICEDEN_ITEM_URL}/${asset.id}`,
     };
@@ -95,9 +134,10 @@ const parseHeliusAsset = (asset: HeliusAsset): MeatbagNft | null => {
 };
 
 /**
- * Fetch all MeatBag NFTs owned by a wallet address using Helius DAS searchAssets.
- * Uses collection grouping filter so only MeatBags are returned server-side,
- * and paginates automatically to capture all results.
+ * Fetch all MeatBag NFTs owned by a wallet address using Helius DAS getAssetsByOwner.
+ * Fetches ALL assets for the wallet and filters client-side by collection grouping
+ * and name pattern. This is more reliable than searchAssets with grouping filter,
+ * which can miss honorary or differently-grouped NFTs.
  */
 export const fetchNftsByOwner = async (
   apiKey: string,
@@ -116,14 +156,15 @@ export const fetchNftsByOwner = async (
         body: JSON.stringify({
           jsonrpc: "2.0",
           id: "meatbags-companion",
-          method: "searchAssets",
+          method: "getAssetsByOwner",
           params: {
             ownerAddress,
-            grouping: ["collection", COLLECTION_ADDRESS],
             page,
             limit: PAGE_LIMIT,
             displayOptions: {
+              showFungible: false,
               showNativeBalance: false,
+              showZeroBalance: false,
             },
           },
         }),
@@ -138,7 +179,6 @@ export const fetchNftsByOwner = async (
       let data: HeliusDasResponse;
       try {
         const raw = await response.json();
-        // JSON-RPC may return {error} instead of {result}
         if (raw.error) {
           reportHeliusFailure();
           return err("HELIUS_UNAVAILABLE", `Helius RPC error: ${raw.error.message ?? JSON.stringify(raw.error)}`, true);
@@ -149,29 +189,30 @@ export const fetchNftsByOwner = async (
       }
       reportHeliusSuccess();
 
-      const nfts: MeatbagNft[] = [];
+      // Client-side filter: only keep MeatBag assets
+      const meatbagAssets = data.result.items.filter(isMeatbagAsset);
+
       let skipped = 0;
-      for (const item of data.result.items) {
+      for (const item of meatbagAssets) {
         const parsed = parseHeliusAsset(item);
         if (parsed) {
-          nfts.push(parsed);
+          allNfts.push(parsed);
         } else {
           skipped++;
-          console.warn(`[helius] Failed to parse asset: ${item.id} (${item.content?.metadata?.name ?? "unknown"})`);
+          console.warn(`[helius] Failed to parse MeatBag asset: ${item.id} (${item.content?.metadata?.name ?? "unknown"})`);
         }
       }
 
       if (skipped > 0) {
-        console.warn(`[helius] Skipped ${skipped}/${data.result.items.length} assets for ${ownerAddress} (page ${page})`);
+        console.warn(`[helius] Skipped ${skipped}/${meatbagAssets.length} MeatBag assets for ${ownerAddress} (page ${page})`);
       }
-
-      allNfts.push(...nfts);
 
       // Stop when we got fewer items than the limit (last page)
       if (data.result.items.length < PAGE_LIMIT) break;
       page++;
     }
 
+    console.log(`[helius] Found ${allNfts.length} MeatBags for ${ownerAddress.slice(0, 8)}...`);
     return ok({ items: allNfts, total: allNfts.length });
   } catch (error) {
     reportHeliusFailure();

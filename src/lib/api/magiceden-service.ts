@@ -1,4 +1,4 @@
-import type { CollectionStats } from "@/types/nft";
+import type { CollectionStats, NftListing } from "@/types/nft";
 import type { ApiResult } from "@/types/api";
 import { ok, err } from "@/types/api";
 import { MAGICEDEN_SLUG, MAGICEDEN_ITEM_URL, MAGICEDEN_COLLECTION_URL } from "@/lib/utils/constants";
@@ -35,6 +35,92 @@ export const fetchCollectionStats = async (): Promise<ApiResult<CollectionStats>
     return err(
       "MAGICEDEN_API_ERROR",
       error instanceof Error ? error.message : "Failed to fetch collection stats",
+      true
+    );
+  }
+};
+
+/**
+ * Fetch active MagicEden listings for the MeatBags collection.
+ * Paginates through all listings and filters by seller wallets.
+ */
+export const fetchCollectionListings = async (
+  sellerAddresses: string[]
+): Promise<ApiResult<NftListing[]>> => {
+  if (sellerAddresses.length === 0) return ok([]);
+
+  const sellerSet = new Set(sellerAddresses);
+  const allListings: NftListing[] = [];
+  let totalScanned = 0;
+
+  console.log(`[magiceden] Fetching collection listings, looking for ${sellerAddresses.length} seller(s)...`);
+
+  try {
+    let offset = 0;
+    const limit = 100;
+
+    while (true) {
+      const url = `${ME_API_BASE}/collections/${MAGICEDEN_SLUG}/listings?offset=${offset}&limit=${limit}`;
+      const response = await fetch(url, {
+        cache: "no-store",
+        headers: {
+          "Accept": "application/json",
+          "User-Agent": "MeatBags-Companion/1.0",
+        },
+      });
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        console.error(`[magiceden] Listings API error: ${response.status} at offset ${offset} — ${body.slice(0, 300)}`);
+        // Non-critical: return what we have so far
+        if (allListings.length > 0) break;
+        return err("MAGICEDEN_API_ERROR", `MagicEden listings error: ${response.status} — ${body.slice(0, 100)}`, true);
+      }
+
+      const data: Array<{
+        tokenMint: string;
+        seller: string;
+        price: number;
+        rpiConfirmed?: boolean;
+      }> = await response.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        console.log(`[magiceden] No more listings at offset ${offset}`);
+        break;
+      }
+
+      totalScanned += data.length;
+
+      for (const listing of data) {
+        if (sellerSet.has(listing.seller)) {
+          allListings.push({
+            mintAddress: listing.tokenMint,
+            seller: listing.seller,
+            priceSol: listing.price,
+            marketplace: "Magic Eden",
+          });
+        }
+      }
+
+      console.log(`[magiceden] Page offset=${offset}: scanned ${data.length} listings, found ${allListings.length} match(es) so far`);
+
+      if (data.length < limit) break;
+      offset += limit;
+
+      // Safety: don't fetch more than 5000 listings
+      if (offset >= 5000) {
+        console.warn(`[magiceden] Hit pagination limit at offset ${offset}`);
+        break;
+      }
+    }
+
+    console.log(`[magiceden] Done: scanned ${totalScanned} total listings, found ${allListings.length} from user wallets`);
+    return ok(allListings);
+  } catch (error) {
+    console.error(`[magiceden] Failed to fetch listings:`, error);
+    return err(
+      "MAGICEDEN_API_ERROR",
+      error instanceof Error ? error.message : "Failed to fetch listings",
       true
     );
   }
