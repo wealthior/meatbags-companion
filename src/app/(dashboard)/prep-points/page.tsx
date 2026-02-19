@@ -59,7 +59,7 @@ export default function PrepPointsPage() {
       </div>
 
       {/* Projection Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
           label="Daily Yield"
           value={formatNumber(projections.daily)}
@@ -96,12 +96,12 @@ export default function PrepPointsPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border-default text-[10px] text-text-muted uppercase tracking-wider">
-                <th className="text-left px-4 py-2">Mask</th>
-                <th className="text-right px-4 py-2">Count</th>
-                <th className="text-right px-4 py-2">Base Yield</th>
-                <th className="text-right px-4 py-2">Daily Total</th>
-                <th className="text-right px-4 py-2">% of Total</th>
+              <tr className="border-b border-border-default text-[10px] text-text-secondary uppercase tracking-wider">
+                <th className="text-left px-2 sm:px-4 py-2">Mask</th>
+                <th className="text-right px-2 sm:px-4 py-2">Count</th>
+                <th className="text-right px-2 sm:px-4 py-2 hidden sm:table-cell">Base Yield</th>
+                <th className="text-right px-2 sm:px-4 py-2">Daily Total</th>
+                <th className="text-right px-2 sm:px-4 py-2">%</th>
               </tr>
             </thead>
             <tbody>
@@ -116,19 +116,19 @@ export default function PrepPointsPage() {
                     key={color}
                     className="border-b border-border-default/50 hover:bg-bg-hover/30 transition-colors"
                   >
-                    <td className="px-4 py-2">
+                    <td className="px-2 sm:px-4 py-2">
                       <TraitBadge maskColor={color as MaskColor} size="sm" />
                     </td>
-                    <td className="text-right px-4 py-2 text-xs text-text-secondary">
+                    <td className="text-right px-2 sm:px-4 py-2 text-xs text-text-secondary">
                       {count}
                     </td>
-                    <td className="text-right px-4 py-2 text-xs text-text-secondary">
+                    <td className="text-right px-2 sm:px-4 py-2 text-xs text-text-secondary hidden sm:table-cell">
                       {formatNumber(baseYield)}
                     </td>
-                    <td className="text-right px-4 py-2 text-xs text-neon-green font-medium">
+                    <td className="text-right px-2 sm:px-4 py-2 text-xs text-neon-green font-medium">
                       {formatNumber(dailyTotal)}
                     </td>
-                    <td className="text-right px-4 py-2 text-xs text-text-muted">
+                    <td className="text-right px-2 sm:px-4 py-2 text-xs text-text-muted">
                       {pct}%
                     </td>
                   </tr>
@@ -137,17 +137,17 @@ export default function PrepPointsPage() {
             </tbody>
             <tfoot>
               <tr className="bg-bg-hover/20">
-                <td className="px-4 py-2 text-xs font-bold text-text-primary uppercase">
+                <td className="px-2 sm:px-4 py-2 text-xs font-bold text-text-primary uppercase">
                   Total
                 </td>
-                <td className="text-right px-4 py-2 text-xs text-text-primary font-bold">
+                <td className="text-right px-2 sm:px-4 py-2 text-xs text-text-primary font-bold">
                   {formatNumber(data?.nfts.length ?? 0)}
                 </td>
-                <td className="text-right px-4 py-2" />
-                <td className="text-right px-4 py-2 text-xs text-neon-green font-bold text-glow-green">
+                <td className="text-right px-2 sm:px-4 py-2 hidden sm:table-cell" />
+                <td className="text-right px-2 sm:px-4 py-2 text-xs text-neon-green font-bold text-glow-green">
                   {formatNumber(projections.daily)}
                 </td>
-                <td className="text-right px-4 py-2 text-xs text-text-muted">
+                <td className="text-right px-2 sm:px-4 py-2 text-xs text-text-muted">
                   100%
                 </td>
               </tr>

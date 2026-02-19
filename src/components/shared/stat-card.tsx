@@ -3,23 +3,27 @@
 import { cn } from "@/lib/utils/cn";
 import type { LucideIcon } from "lucide-react";
 
+type AccentColor = "green" | "gold" | "rust" | "purple";
+
 interface StatCardProps {
   label: string;
   value: string;
   subValue?: string;
   icon?: LucideIcon;
-  accent?: "green" | "gold" | "rust" | "purple";
+  accent?: AccentColor;
+  /** Override accent with a custom hex color (used for tier colors etc.) */
+  customColor?: string;
   className?: string;
 }
 
-const accentBarClasses = {
+const accentBarClasses: Record<AccentColor, string> = {
   green: "bg-neon-green",
   gold: "bg-gold",
   rust: "bg-rust",
   purple: "bg-toxic-purple",
 };
 
-const accentTextClasses = {
+const accentTextClasses: Record<AccentColor, string> = {
   green: "text-neon-green",
   gold: "text-gold",
   rust: "text-rust",
@@ -32,6 +36,7 @@ export function StatCard({
   subValue,
   icon: Icon,
   accent = "green",
+  customColor,
   className,
 }: StatCardProps) {
   return (
@@ -42,25 +47,42 @@ export function StatCard({
       )}
     >
       {/* Accent bar on left */}
-      <div className={cn("absolute left-0 top-0 bottom-0 w-0.5", accentBarClasses[accent])} />
+      {customColor ? (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-0.5"
+          style={{ backgroundColor: customColor }}
+        />
+      ) : (
+        <div className={cn("absolute left-0 top-0 bottom-0 w-0.5", accentBarClasses[accent])} />
+      )}
 
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] text-text-muted uppercase tracking-wider mb-1">
+          <p className="text-[10px] text-text-secondary uppercase tracking-wider mb-1">
             {label}
           </p>
-          <p className={cn("text-xl font-bold", accentTextClasses[accent])}>
-            {value}
-          </p>
+          {customColor ? (
+            <p className="text-xl font-bold" style={{ color: customColor }}>
+              {value}
+            </p>
+          ) : (
+            <p className={cn("text-xl font-bold", accentTextClasses[accent])}>
+              {value}
+            </p>
+          )}
           {subValue && (
             <p className="text-xs text-text-secondary mt-0.5">{subValue}</p>
           )}
         </div>
         {Icon && (
-          <Icon
-            size={18}
-            className={cn("opacity-40", accentTextClasses[accent])}
-          />
+          customColor ? (
+            <Icon size={18} style={{ color: customColor, opacity: 0.4 }} />
+          ) : (
+            <Icon
+              size={18}
+              className={cn("opacity-40", accentTextClasses[accent])}
+            />
+          )
         )}
       </div>
     </div>

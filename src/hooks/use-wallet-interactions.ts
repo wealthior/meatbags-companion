@@ -24,12 +24,14 @@ interface UseWalletInteractionsResult {
 
 /**
  * Hook providing aggregated wallet interaction data and packed bubble positions.
+ * Supports optional date range filter.
  */
 export const useWalletInteractions = (
   containerWidth?: number,
-  containerHeight?: number
+  containerHeight?: number,
+  dateRange?: { start: number; end: number }
 ): UseWalletInteractionsResult => {
-  const { data: transactions, isLoading, isError } = useAllTransactions();
+  const { data: transactions, isLoading: txLoading, isError } = useAllTransactions();
   const wallets = useWalletStore((s) => s.wallets);
 
   const trackedAddresses = useMemo(
@@ -37,10 +39,20 @@ export const useWalletInteractions = (
     [wallets]
   );
 
+  // Filter by date range
+  const filteredTransactions = useMemo(() => {
+    if (!transactions) return [];
+    if (!dateRange) return transactions;
+
+    return transactions.filter(
+      (tx) => tx.timestamp >= dateRange.start && tx.timestamp <= dateRange.end
+    );
+  }, [transactions, dateRange]);
+
   const interactions = useMemo(() => {
-    if (!transactions || transactions.length === 0) return [];
-    return aggregateInteractions(transactions, trackedAddresses);
-  }, [transactions, trackedAddresses]);
+    if (filteredTransactions.length === 0) return [];
+    return aggregateInteractions(filteredTransactions, trackedAddresses);
+  }, [filteredTransactions, trackedAddresses]);
 
   const summary = useMemo(
     () => buildInteractionsSummary(interactions),
@@ -55,6 +67,8 @@ export const useWalletInteractions = (
       }),
     [interactions, containerWidth, containerHeight]
   );
+
+  const isLoading = txLoading;
 
   return { interactions, summary, bubbles, isLoading, isError };
 };

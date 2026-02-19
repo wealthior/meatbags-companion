@@ -12,6 +12,7 @@ import { PageLoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { BubbleChart } from "@/components/interactions/bubble-chart";
 import { InteractionsTable } from "@/components/interactions/interactions-table";
 import { InteractionDetail } from "@/components/interactions/interaction-detail";
+import { DateRangeFilter } from "@/components/interactions/date-range-filter";
 import { formatNumber, formatSol, shortenAddress } from "@/lib/utils/format";
 import type { PositionedBubble, WalletInteraction } from "@/types/wallet-interactions";
 
@@ -19,6 +20,8 @@ export default function InteractionsPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 600, height: 500 });
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+  const [dateStart, setDateStart] = useState(() => new Date("2024-10-01")); // TGE
+  const [dateEnd, setDateEnd] = useState(() => new Date());
 
   // Measure container for responsive bubble chart
   useEffect(() => {
@@ -40,9 +43,18 @@ export default function InteractionsPage() {
     return () => observer.disconnect();
   }, []);
 
+  const dateRange = useMemo(
+    () => ({
+      start: Math.floor(dateStart.getTime() / 1000),
+      end: Math.floor(dateEnd.getTime() / 1000),
+    }),
+    [dateStart, dateEnd]
+  );
+
   const { interactions, summary, bubbles, isLoading } = useWalletInteractions(
     containerSize.width,
-    containerSize.height
+    containerSize.height,
+    dateRange
   );
 
   const wallets = useWalletStore((s) => s.wallets);
@@ -98,15 +110,25 @@ export default function InteractionsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <GlitchText text="Interactions" className="text-lg text-text-primary" />
-        <p className="text-[10px] text-text-muted uppercase tracking-wider mt-1">
-          Counterparty analysis across all vaults
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <GlitchText text="Interactions" className="text-lg text-text-primary" />
+          <p className="text-[10px] text-text-muted uppercase tracking-wider mt-1">
+            Counterparty analysis across all vaults
+          </p>
+        </div>
+        <DateRangeFilter
+          startDate={dateStart}
+          endDate={dateEnd}
+          onRangeChange={(start, end) => {
+            setDateStart(start);
+            setDateEnd(end);
+          }}
+        />
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
           label="Counterparties"
           value={formatNumber(summary.totalCounterparties)}
@@ -147,14 +169,14 @@ export default function InteractionsPage() {
       {/* Bubble Chart */}
       <div
         ref={containerRef}
-        className="bg-bg-surface border border-border-default rounded-lg p-4"
+        className="bg-bg-surface border border-border-default rounded-lg p-3 sm:p-4"
       >
-        <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-4">
+        <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-3 sm:mb-4">
           Interaction Network
         </h3>
 
         {/* Legend */}
-        <div className="flex flex-wrap gap-4 mb-4">
+        <div className="flex flex-wrap gap-2 sm:gap-4 mb-3 sm:mb-4">
           {[
             { color: "bg-neon-green", label: "They buy from you" },
             { color: "bg-blood", label: "You buy from them" },
@@ -181,7 +203,7 @@ export default function InteractionsPage() {
       </div>
 
       {/* Detail + Table layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Table (2/3 width) */}
         <div className="lg:col-span-2 bg-bg-surface border border-border-default rounded-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-border-default">

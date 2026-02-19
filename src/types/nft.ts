@@ -52,6 +52,8 @@ export interface MeatbagNft {
   readonly ownerWallet: string;
   readonly isHonorary: boolean;
   readonly isSoulbound: boolean;
+  readonly isStaked: boolean;
+  readonly stakingProgram?: string;
   readonly dailyYield: number;
   readonly magicEdenUrl: string;
 }

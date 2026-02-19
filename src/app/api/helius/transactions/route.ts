@@ -7,7 +7,9 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const address = searchParams.get("address");
   const before = searchParams.get("before") ?? undefined;
-  const limit = parseInt(searchParams.get("limit") ?? "50", 10);
+  const limit = parseInt(searchParams.get("limit") ?? "100", 10);
+  const typesParam = searchParams.get("types");
+  const types = typesParam ? typesParam.split(",") : undefined;
 
   if (!address || !isValidSolanaAddress(address)) {
     return NextResponse.json(
@@ -17,7 +19,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { HELIUS_API_KEY } = getServerEnv();
-  const result = await fetchTransactionHistory(HELIUS_API_KEY, address, before, limit);
+  const result = await fetchTransactionHistory(HELIUS_API_KEY, address, { before, limit, types });
 
   if (!result.success) {
     return NextResponse.json(result, { status: 502 });

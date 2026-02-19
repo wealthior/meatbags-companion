@@ -83,7 +83,7 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
   return (
     <div className="space-y-4">
       {/* Search + Filter Bar */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
         <div className="relative flex-1">
           <Search
             size={14}
@@ -91,36 +91,38 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
           />
           <input
             type="text"
-            placeholder="Search by name or mint address..."
+            placeholder="Search by name or mint..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-bg-surface border border-border-default rounded-md pl-9 pr-3 py-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-neon-green/30"
           />
         </div>
 
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={cn(
-            "flex items-center gap-2 px-3 py-2 rounded-md text-xs border transition-colors cursor-pointer",
-            showFilters
-              ? "border-neon-green/30 text-neon-green bg-neon-green/5"
-              : "border-border-default text-text-muted hover:text-text-primary"
-          )}
-        >
-          <SlidersHorizontal size={12} />
-          Filters
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-md text-xs border transition-colors cursor-pointer",
+              showFilters
+                ? "border-neon-green/30 text-neon-green bg-neon-green/5"
+                : "border-border-default text-text-muted hover:text-text-primary"
+            )}
+          >
+            <SlidersHorizontal size={12} />
+            <span className="hidden sm:inline">Filters</span>
+          </button>
 
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortOption)}
-          className="bg-bg-surface border border-border-default rounded-md px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-neon-green/30 cursor-pointer"
-        >
-          <option value="yield-desc">Yield (High → Low)</option>
-          <option value="yield-asc">Yield (Low → High)</option>
-          <option value="name">Name (A → Z)</option>
-          <option value="wallet">Wallet</option>
-        </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            className="bg-bg-surface border border-border-default rounded-md px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-neon-green/30 cursor-pointer flex-1 sm:flex-none"
+          >
+            <option value="yield-desc">Yield (High → Low)</option>
+            <option value="yield-asc">Yield (Low → High)</option>
+            <option value="name">Name (A → Z)</option>
+            <option value="wallet">Wallet</option>
+          </select>
+        </div>
       </div>
 
       {/* Expanded Filters */}
@@ -228,7 +230,7 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
           {filteredNfts.map((nft) => (
             <NftCard key={nft.mintAddress} nft={nft} />
           ))}

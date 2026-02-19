@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { X, ArrowDownRight, ArrowUpRight, Repeat, Sparkles } from "lucide-react";
+import { X, ArrowDownRight, ArrowUpRight, Repeat, Sparkles, ExternalLink } from "lucide-react";
 import type { WalletInteraction } from "@/types/wallet-interactions";
 import type { NftTransaction, TransactionType } from "@/types/transaction";
 import { shortenAddress, formatSol, formatUsd, formatDateTime } from "@/lib/utils/format";
@@ -82,7 +82,8 @@ export function InteractionDetail({
                 return (
                   <tr
                     key={tx.signature}
-                    className="border-t border-border-default/30 hover:bg-bg-hover/20 transition-colors"
+                    className="border-t border-border-default/30 hover:bg-bg-hover/20 transition-colors group cursor-pointer"
+                    onClick={() => window.open(`https://solscan.io/tx/${tx.signature}`, "_blank")}
                   >
                     <td className="px-3 py-1.5">
                       <div className="flex items-center gap-1">
@@ -99,7 +100,10 @@ export function InteractionDetail({
                       {formatSol(tx.solAmount)}
                     </td>
                     <td className="text-right px-3 py-1.5 text-[9px] text-text-muted">
-                      {formatDateTime(tx.timestamp)}
+                      <span className="flex items-center justify-end gap-1">
+                        {formatDateTime(tx.timestamp)}
+                        <ExternalLink size={8} className="opacity-0 group-hover:opacity-100 text-neon-green transition-opacity" />
+                      </span>
                     </td>
                   </tr>
                 );

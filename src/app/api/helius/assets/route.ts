@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
   const result = await fetchNftsByOwner(HELIUS_API_KEY, ownerAddress);
 
   if (!result.success) {
+    console.error("[helius/assets] Error:", result.error.message);
     return NextResponse.json(result, { status: 502 });
   }
 

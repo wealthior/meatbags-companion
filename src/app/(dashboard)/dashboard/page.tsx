@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Grid3X3,
   Zap,
@@ -10,7 +11,7 @@ import {
   TrendingUp,
   ExternalLink,
   DollarSign,
-  Users,
+  Lock,
 } from "lucide-react";
 import { useAllNfts } from "@/hooks/use-nfts";
 import { useSolPrice } from "@/hooks/use-sol-price";
@@ -19,7 +20,7 @@ import { useWalletStore } from "@/stores/wallet-store";
 import { calculateWalletPrepPoints, aggregateAcrossWallets } from "@/lib/domain/prep-points";
 import { calculateLoserboardStats } from "@/lib/domain/loserboard";
 import { getTraitDistribution } from "@/lib/domain/wallet-aggregator";
-import { MASK_COLOR_CONFIG, MAGICEDEN_COLLECTION_URL } from "@/lib/utils/constants";
+import { MASK_COLOR_CONFIG, MAGICEDEN_COLLECTION_URL, TIER_CONFIGS } from "@/lib/utils/constants";
 import { StatCard } from "@/components/shared/stat-card";
 import { GlitchText } from "@/components/shared/glitch-text";
 import { TraitBadge } from "@/components/nft/trait-badge";
@@ -29,7 +30,7 @@ import { cn } from "@/lib/utils/cn";
 import type { MaskColor } from "@/types/nft";
 
 export default function DashboardPage() {
-  const { data: nftData, isLoading: nftsLoading } = useAllNfts();
+  const { data: nftData, isLoading: nftsLoading, isError: nftsError, refetch } = useAllNfts();
   const { data: solPrice } = useSolPrice();
   const { data: collectionStats } = useCollectionStats();
   const wallets = useWalletStore((s) => s.wallets);
@@ -51,7 +52,7 @@ export default function DashboardPage() {
 
   const traitDist = useMemo(() => {
     if (!nftData?.nfts) return [];
-    return getTraitDistribution(nftData.nfts).slice(0, 10);
+    return getTraitDistribution(nftData.nfts);
   }, [nftData]);
 
   if (wallets.length === 0) {
@@ -75,7 +76,27 @@ export default function DashboardPage() {
 
   if (nftsLoading) return <PageLoadingSkeleton />;
 
+  if (nftsError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <div className="w-3 h-3 rounded-full bg-blood rad-pulse" />
+        <p className="text-text-muted text-sm text-center">
+          Failed to load NFT data from the wasteland.
+          <br />
+          <span className="text-[10px]">Check your Helius API key or try again.</span>
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="px-4 py-2 rounded-md text-xs font-medium uppercase tracking-wider bg-rust/10 border border-rust/30 text-rust hover:bg-rust/20 transition-colors cursor-pointer"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   const nfts = nftData?.nfts ?? [];
+  const stakedCount = nfts.filter((n) => n.isStaked).length;
   const portfolioValueSol = nfts.length * (collectionStats?.floorPrice ?? 0);
   const portfolioValueUsd = portfolioValueSol * (solPrice?.usd ?? 0);
 
@@ -83,11 +104,48 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <GlitchText text="Dashboard" className="text-lg text-text-primary" />
-          <p className="text-[10px] text-text-muted uppercase tracking-wider mt-1">
-            Wasteland command center
-          </p>
+        <div className="flex items-center gap-3">
+          <div>
+            <GlitchText text="Dashboard" className="text-lg text-text-primary" />
+            <p className="text-[10px] text-text-muted uppercase tracking-wider mt-1">
+              Wasteland command center
+            </p>
+          </div>
+          {/* Achievement badges */}
+          <div className="flex items-center gap-2">
+            {/* Billionaire badge — 20+ MeatBags */}
+            {nfts.length >= 20 && (
+              <div className="relative group cursor-default">
+                <div className="absolute inset-0 rounded-full bg-gold/20 blur-lg group-hover:bg-gold/30 transition-colors" />
+                <Image
+                  src="/Billionaire-Logo.png"
+                  alt="Billionaire"
+                  width={44}
+                  height={44}
+                  className="relative drop-shadow-[0_0_12px_rgba(255,215,0,0.4)] group-hover:drop-shadow-[0_0_20px_rgba(255,215,0,0.6)] transition-all group-hover:scale-110"
+                />
+                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[7px] text-gold uppercase tracking-wider font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                  Billionaire
+                </span>
+              </div>
+            )}
+            {/* Illegal Alien badge — 50+ MeatBags */}
+            {nfts.length >= 50 && (
+              <div className="relative group cursor-default">
+                <div className="absolute inset-0 rounded-full bg-neon-green/15 blur-lg group-hover:bg-neon-green/25 transition-colors" />
+                <Image
+                  src="/Illegal-Alien.svg"
+                  alt="Illegal Alien"
+                  width={44}
+                  height={44}
+                  className="relative drop-shadow-[0_0_12px_rgba(57,255,20,0.4)] group-hover:drop-shadow-[0_0_20px_rgba(57,255,20,0.6)] transition-all group-hover:scale-110"
+                />
+                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[7px] text-neon-green uppercase tracking-wider font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                  Illegal Alien
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         {solPrice && (
           <div className="text-right">
@@ -101,95 +159,126 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Top Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard
-          label="Total MeatBags"
-          value={formatNumber(nfts.length)}
-          icon={Grid3X3}
-          accent="green"
-        />
-        <StatCard
-          label="Daily Prep Points"
-          value={formatNumber(prepPointsAgg?.projections.daily ?? 0)}
-          icon={Zap}
-          accent="gold"
-        />
-        <StatCard
-          label="Portfolio Value"
-          value={formatSol(portfolioValueSol)}
-          subValue={portfolioValueUsd > 0 ? formatUsd(portfolioValueUsd) : undefined}
-          icon={DollarSign}
-          accent="green"
-        />
-        <StatCard
-          label="Tier"
-          value={loserboardStats?.currentTier ?? "—"}
-          subValue={loserboardStats ? `${formatNumber(loserboardStats.deadPoints)} Dead Points` : undefined}
-          icon={Trophy}
-          accent="purple"
-        />
-      </div>
-
-      {/* Collection Stats from MagicEden */}
+      {/* ── Collection Stats ── */}
       {collectionStats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard
-            label="Floor Price"
-            value={formatSol(collectionStats.floorPrice)}
-            accent="green"
-          />
-          <StatCard
-            label="Listed"
-            value={formatNumber(collectionStats.listedCount)}
-            accent="rust"
-          />
-          <StatCard
-            label="Holders"
-            value={formatNumber(collectionStats.uniqueHolders)}
-            icon={Users}
-            accent="purple"
-          />
-          <StatCard
-            label="Wallets Tracked"
-            value={String(wallets.length)}
-            icon={Wallet}
-            accent="rust"
-          />
+        <div className="space-y-3">
+          <h3 className="text-[10px] text-rust uppercase tracking-widest font-bold">
+            Collection — MagicEden
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <StatCard
+              label="Floor Price"
+              value={formatSol(collectionStats.floorPrice)}
+              accent="green"
+            />
+            <StatCard
+              label="Listed"
+              value={formatNumber(collectionStats.listedCount)}
+              accent="rust"
+            />
+            <StatCard
+              label="Total Volume"
+              value={formatSol(collectionStats.volumeAll)}
+              accent="purple"
+            />
+            <StatCard
+              label="Wallets Tracked"
+              value={String(wallets.length)}
+              icon={Wallet}
+              accent="rust"
+            />
+          </div>
         </div>
       )}
 
+      {/* ── Your Wallets ── */}
+      <div className="space-y-3">
+        <h3 className="text-[10px] text-neon-green uppercase tracking-widest font-bold">
+          Your Wallets — {wallets.length} vault{wallets.length !== 1 ? "s" : ""}
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <StatCard
+            label="Total MeatBags"
+            value={formatNumber(nfts.length)}
+            icon={Grid3X3}
+            accent="green"
+          />
+          <StatCard
+            label="Staked"
+            value={`${stakedCount}/${nfts.length}`}
+            subValue={stakedCount > 0 ? `${Math.round((stakedCount / nfts.length) * 100)}% locked` : "None staked"}
+            icon={Lock}
+            accent="green"
+          />
+          <StatCard
+            label="Daily Prep Points"
+            value={formatNumber(prepPointsAgg?.projections.daily ?? 0)}
+            icon={Zap}
+            accent="gold"
+          />
+          <StatCard
+            label="Portfolio Value"
+            value={formatSol(portfolioValueSol)}
+            subValue={portfolioValueUsd > 0 ? formatUsd(portfolioValueUsd) : undefined}
+            icon={DollarSign}
+            accent="green"
+          />
+          <StatCard
+            label="Tier"
+            value={loserboardStats?.currentTier ?? "—"}
+            subValue={loserboardStats ? `${formatNumber(loserboardStats.deadPoints)} Dead Points` : undefined}
+            icon={Trophy}
+            customColor={TIER_CONFIGS.find((t) => t.tier === loserboardStats?.currentTier)?.color}
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Trait Distribution */}
-        {traitDist.length > 0 && (
-          <div className="bg-bg-surface border border-border-default rounded-lg p-4">
-            <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-4">
-              Your Trait Distribution
-            </h3>
-            <div className="space-y-2">
-              {traitDist.map(({ trait, count, percentage }) => (
-                <div key={trait} className="flex items-center gap-3">
-                  <TraitBadge maskColor={trait as MaskColor} size="sm" />
-                  <div className="flex-1">
-                    <div className="h-2 bg-bg-primary rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${percentage}%`,
-                          backgroundColor:
-                            MASK_COLOR_CONFIG[trait as MaskColor]?.hexColor ?? "#39ff14",
-                        }}
-                      />
+        {/* Mask Distribution */}
+        {traitDist.length > 0 && (() => {
+          const maxCount = traitDist[0].count;
+          return (
+            <div className="bg-bg-surface border border-border-default rounded-lg p-4">
+              <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-4">
+                Your Mask Distribution
+              </h3>
+              <div className="space-y-1.5">
+                {traitDist.map(({ trait, count, percentage }) => {
+                  const config = MASK_COLOR_CONFIG[trait as MaskColor];
+                  const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                  return (
+                    <div key={trait} className="flex items-center gap-2">
+                      <div className="w-[90px] shrink-0">
+                        <TraitBadge maskColor={trait as MaskColor} size="sm" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="h-3 bg-bg-primary rounded overflow-hidden">
+                          <div
+                            className="h-full rounded transition-all duration-500"
+                            style={{
+                              width: `${barWidth}%`,
+                              backgroundColor: config?.hexColor ?? "#39ff14",
+                              boxShadow: `0 0 8px ${config?.hexColor ?? "#39ff14"}40`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-text-primary font-medium w-6 text-right shrink-0">
+                        {count}
+                      </span>
+                      <span className="text-[9px] text-text-secondary w-9 text-right shrink-0">
+                        {percentage.toFixed(0)}%
+                      </span>
+                      <span className="text-[8px] text-text-muted w-12 text-right shrink-0 hidden md:block">
+                        {formatNumber(config?.dailyYield ?? 0)}/d
+                      </span>
                     </div>
-                  </div>
-                  <span className="text-[10px] text-text-muted w-12 text-right">
-                    {count} ({percentage.toFixed(0)}%)
-                  </span>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Quick Links */}
         <div className="bg-bg-surface border border-border-default rounded-lg p-4">

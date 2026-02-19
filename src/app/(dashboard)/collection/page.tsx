@@ -11,7 +11,7 @@ import { formatNumber } from "@/lib/utils/format";
 import { MASK_COLOR_CONFIG, MAGICEDEN_COLLECTION_URL } from "@/lib/utils/constants";
 
 export default function CollectionPage() {
-  const { data, isLoading, error } = useAllNfts();
+  const { data, isLoading, error, refetch } = useAllNfts();
   const wallets = useWalletStore((s) => s.wallets);
 
   if (wallets.length === 0) {
@@ -31,13 +31,20 @@ export default function CollectionPage() {
 
   if (error) {
     return (
-      <div className="text-center py-20">
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <div className="w-3 h-3 rounded-full bg-blood rad-pulse" />
         <p className="text-blood text-sm font-bold uppercase">
           Radiation Leak Detected
         </p>
-        <p className="text-text-muted text-xs mt-1">
+        <p className="text-text-muted text-xs">
           {error.message}
         </p>
+        <button
+          onClick={() => refetch()}
+          className="px-4 py-2 rounded-md text-xs font-medium uppercase tracking-wider bg-rust/10 border border-rust/30 text-rust hover:bg-rust/20 transition-colors cursor-pointer"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -78,7 +85,7 @@ export default function CollectionPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
           label="Total MeatBags"
           value={formatNumber(nfts.length)}

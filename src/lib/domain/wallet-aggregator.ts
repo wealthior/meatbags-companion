@@ -74,7 +74,8 @@ export const calculatePortfolioValue = (
 };
 
 /**
- * Get trait distribution across all NFTs
+ * Get trait distribution across all NFTs.
+ * Only includes mask colors the user actually owns (no zeros).
  */
 export const getTraitDistribution = (
   nfts: readonly MeatbagNft[]
@@ -87,6 +88,7 @@ export const getTraitDistribution = (
 
   const total = nfts.length;
   return Object.entries(counts)
+    .filter(([, count]) => count > 0)
     .map(([trait, count]) => ({
       trait,
       count,
