@@ -20,7 +20,7 @@ import { useUiStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils/cn";
 
 const NAV_ITEMS = [
-  { href: "/", icon: LayoutDashboard, label: "Dashboard", shortLabel: "DB" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", shortLabel: "DB" },
   { href: "/collection", icon: Grid3X3, label: "Collection", shortLabel: "CO" },
   { href: "/prep-points", icon: Zap, label: "Prep Points", shortLabel: "PP" },
   { href: "/loserboard", icon: Trophy, label: "Loserboard", shortLabel: "LB" },
@@ -63,8 +63,7 @@ export function Sidebar() {
       <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
           const isActive =
-            pathname === item.href ||
-            (item.href !== "/" && pathname.startsWith(item.href));
+            pathname === item.href || pathname.startsWith(item.href + "/");
 
           return (
             <Link

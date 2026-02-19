@@ -32,12 +32,12 @@ export default function LandingPage() {
       if (!useWalletStore.getState().hasWallet(addr)) {
         addWallet(addr, "Main Wallet", true);
       }
-      router.push("/collection");
+      router.push("/dashboard");
       return;
     }
 
     if (wallets.length > 0) {
-      router.push("/collection");
+      router.push("/dashboard");
     }
   }, [hydrated, connected, publicKey, wallets.length, addWallet, router]);
 
