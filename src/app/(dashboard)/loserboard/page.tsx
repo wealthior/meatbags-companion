@@ -8,7 +8,7 @@ import { useWalletStore } from "@/stores/wallet-store";
 import { calculateLoserboardStats, BADGE_DEFINITIONS } from "@/lib/domain/loserboard";
 import { StatCard } from "@/components/shared/stat-card";
 import { GlitchText } from "@/components/shared/glitch-text";
-import { PageLoadingSkeleton } from "@/components/shared/loading-skeleton";
+import { PageLoadingSkeleton, SectionLoadingIndicator } from "@/components/shared/loading-skeleton";
 import { formatNumber } from "@/lib/utils/format";
 import { TIER_CONFIGS } from "@/lib/utils/constants";
 import { cn } from "@/lib/utils/cn";
@@ -24,7 +24,7 @@ const TIER_ICONS: Record<LoserboardTier, string> = {
 
 export default function LoserboardPage() {
   const { data, isLoading } = useAllNfts();
-  const { data: geocacheData } = useAllGeocaches();
+  const { data: geocacheData, isLoading: geocacheLoading } = useAllGeocaches();
   const wallets = useWalletStore((s) => s.wallets);
 
   // Check if any tracked wallet is an original minter (multiplier > 1.0)
@@ -56,6 +56,9 @@ export default function LoserboardPage() {
         <p className="text-[10px] text-text-muted uppercase tracking-wider mt-1">
           Dead Points & badge tracker
         </p>
+        {geocacheLoading && (
+          <SectionLoadingIndicator label="Loading geocache badges..." />
+        )}
       </div>
 
       {/* Stats */}

@@ -48,6 +48,8 @@ const SERIES_BADGE: Record<GeocacheSeries, string> = {
   "Bounty Box I": "bg-neon-green/10 text-neon-green border-neon-green/20",
   "Bounty Box II": "bg-rust/10 text-rust border-rust/20",
   "Shit Box": "bg-toxic-purple/10 text-toxic-purple border-toxic-purple/20",
+  "Halloween": "bg-[#ff6b00]/10 text-[#ff6b00] border-[#ff6b00]/20",
+  "Merry Crisis": "bg-[#e53e3e]/10 text-[#e53e3e] border-[#e53e3e]/20",
 };
 
 /**

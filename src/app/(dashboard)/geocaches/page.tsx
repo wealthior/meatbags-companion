@@ -7,7 +7,7 @@ import { useWalletStore } from "@/stores/wallet-store";
 import { calculateGeocacheStats } from "@/lib/domain/geocache-stats";
 import { GEOCACHE_MAGICEDEN_COLLECTION_URL } from "@/lib/utils/constants";
 import { GlitchText } from "@/components/shared/glitch-text";
-import { PageLoadingSkeleton } from "@/components/shared/loading-skeleton";
+import { PageLoadingSkeleton, SectionLoadingIndicator, StatSkeleton } from "@/components/shared/loading-skeleton";
 import { GeocacheStatCards } from "@/components/geocache/geocache-stat-cards";
 import { GeocacheTraitBreakdown } from "@/components/geocache/geocache-trait-breakdown";
 import { GeocachePnlSummary } from "@/components/geocache/geocache-pnl-summary";
@@ -105,7 +105,15 @@ export default function GeocachesPage() {
       </div>
 
       {/* Wallet Stats */}
-      {stats && <GeocacheStatCards stats={stats} />}
+      {stats ? (
+        <GeocacheStatCards stats={stats} txLoading={txLoading} />
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <StatSkeleton key={i} />
+          ))}
+        </div>
+      )}
 
       {/* Trait Breakdowns */}
       {stats && (stats.totalHeld > 0 || stats.totalBurned > 0) && (
@@ -125,7 +133,18 @@ export default function GeocachesPage() {
       )}
 
       {/* P&L Summary */}
-      {transactions && transactions.length > 0 && (
+      {txLoading ? (
+        <div>
+          <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-3">
+            Trade Performance
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <StatSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      ) : transactions && transactions.length > 0 ? (
         <div>
           <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-3">
             Trade Performance
@@ -135,7 +154,7 @@ export default function GeocachesPage() {
             trackedAddresses={trackedAddresses}
           />
         </div>
-      )}
+      ) : null}
 
       {/* GeoCaches Grid */}
       <div>
@@ -146,16 +165,27 @@ export default function GeocachesPage() {
       </div>
 
       {/* Activity Timeline */}
-      {transactions && transactions.length > 0 && (
+      {txLoading ? (
         <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-border-default">
             <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">
-              Recent Activity {txLoading ? "" : `(${transactions.length})`}
+              Recent Activity
+            </h3>
+          </div>
+          <div className="p-4">
+            <SectionLoadingIndicator label="Loading transaction history..." />
+          </div>
+        </div>
+      ) : transactions && transactions.length > 0 ? (
+        <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-border-default">
+            <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">
+              Recent Activity ({transactions.length})
             </h3>
           </div>
           <GeocacheActivityTimeline transactions={transactions} maxItems={50} />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

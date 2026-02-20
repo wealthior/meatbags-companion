@@ -5,7 +5,7 @@ import type { NftTransaction } from "./transaction";
 export type GeocacheTier = "Common" | "Rare";
 
 /** GeoCaches series from trait data */
-export type GeocacheSeries = "Bounty Box I" | "Bounty Box II" | "Shit Box";
+export type GeocacheSeries = "Bounty Box I" | "Bounty Box II" | "Shit Box" | "Halloween" | "Merry Crisis";
 
 /** A single GeoCaches NFT */
 export interface GeocacheNft {
@@ -21,6 +21,12 @@ export interface GeocacheNft {
   readonly listedMarketplace?: string;
   readonly listingPriceSol?: number;
   readonly magicEdenUrl: string;
+  /**
+   * Internal: the on-chain update authority address.
+   * Used to detect burned geocaches whose metadata was changed (Halloween/MC → BB1/BB2)
+   * during the in-game "open" process. Not displayed in UI.
+   */
+  readonly _authority?: string;
 }
 
 /** Tier display configuration */
