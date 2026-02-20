@@ -14,6 +14,7 @@ import {
   Wallet,
   Crown,
   Network,
+  Compass,
   ChevronLeft,
   ChevronRight,
   X,
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
   { href: "/raids", icon: Swords, label: "Raids", shortLabel: "RA" },
   { href: "/leaderboard", icon: Crown, label: "Leaderboard", shortLabel: "LR" },
   { href: "/wallets", icon: Wallet, label: "Wallets", shortLabel: "WA" },
+  { href: "/geocaches", icon: Compass, label: "GeoCaches", shortLabel: "GC" },
   { href: "/interactions", icon: Network, label: "Interactions", shortLabel: "IN" },
 ] as const;
 

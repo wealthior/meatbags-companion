@@ -3,6 +3,20 @@
   "version": "0.1.1",
   "private": true,
   "description": "DEGEN companion app for the MeatBags NFT collection on Solana",
+  "license": "MIT",
+  "author": "Wealthior",
+  "keywords": [
+    "solana",
+    "nft",
+    "meatbags",
+    "wallet-tracker",
+    "defi",
+    "web3",
+    "nextjs",
+    "typescript",
+    "prep-points",
+    "geocaches"
+  ],
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

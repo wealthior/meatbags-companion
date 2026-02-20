@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { Trophy, Star, Shield, Skull } from "lucide-react";
 import { useAllNfts } from "@/hooks/use-nfts";
+import { useAllGeocaches } from "@/hooks/use-geocaches";
 import { useWalletStore } from "@/stores/wallet-store";
 import { calculateLoserboardStats, BADGE_DEFINITIONS } from "@/lib/domain/loserboard";
 import { StatCard } from "@/components/shared/stat-card";
@@ -23,6 +24,7 @@ const TIER_ICONS: Record<LoserboardTier, string> = {
 
 export default function LoserboardPage() {
   const { data, isLoading } = useAllNfts();
+  const { data: geocacheData } = useAllGeocaches();
   const wallets = useWalletStore((s) => s.wallets);
 
   // Check if any tracked wallet is an original minter (multiplier > 1.0)
@@ -32,8 +34,8 @@ export default function LoserboardPage() {
 
   const stats = useMemo(() => {
     if (!data?.nfts) return null;
-    return calculateLoserboardStats(data.nfts, [], isOriginalMinter);
-  }, [data, isOriginalMinter]);
+    return calculateLoserboardStats(data.nfts, [], isOriginalMinter, geocacheData?.geocaches ?? []);
+  }, [data, isOriginalMinter, geocacheData]);
 
   if (isLoading) return <PageLoadingSkeleton />;
   if (!stats) {
