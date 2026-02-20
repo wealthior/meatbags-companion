@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.2](https://github.com/wealthior/meatbags-companion/compare/v0.1.1...v0.1.2) (2026-02-20)
+
+
+### Features
+
+* add GeoCaches feature with hooks, stats, and UI integration ([#4](https://github.com/wealthior/meatbags-companion/issues/4)) ([cdf0342](https://github.com/wealthior/meatbags-companion/commit/cdf0342237cb13ea6d8a6e4da5e2da076759ccf9))
+
 ### 0.1.1 (2026-02-20)
 
 
