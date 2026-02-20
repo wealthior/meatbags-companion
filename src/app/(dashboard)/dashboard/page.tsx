@@ -34,10 +34,15 @@ export default function DashboardPage() {
   const { data: collectionStats } = useCollectionStats();
   const wallets = useWalletStore((s) => s.wallets);
 
+  // Check if any tracked wallet is an original minter (multiplier > 1.0)
+  const isOriginalMinter = wallets.some(
+    (w) => w.detectedMultiplier !== undefined && w.detectedMultiplier > 1.0
+  );
+
   const loserboardStats = useMemo(() => {
     if (!nftData?.nfts) return null;
-    return calculateLoserboardStats(nftData.nfts);
-  }, [nftData]);
+    return calculateLoserboardStats(nftData.nfts, [], isOriginalMinter);
+  }, [nftData, isOriginalMinter]);
 
   const traitDist = useMemo(() => {
     if (!nftData?.nfts) return [];

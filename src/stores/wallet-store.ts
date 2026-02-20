@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { TrackedWallet } from "@/types/wallet";
+import type { LoyaltyMultiplier } from "@/types/nft";
 
 interface WalletState {
   /** All tracked wallets (both connected and manual) */
@@ -13,6 +14,8 @@ interface WalletState {
   renameWallet: (address: string, newName: string) => void;
   /** Update a wallet's connected status */
   setWalletConnected: (address: string, isConnected: boolean) => void;
+  /** Set detected loyalty multiplier for a wallet */
+  setDetectedMultiplier: (address: string, multiplier: LoyaltyMultiplier) => void;
   /** Check if a wallet address is already tracked */
   hasWallet: (address: string) => boolean;
   /** Clear all wallets */
@@ -55,6 +58,13 @@ export const useWalletStore = create<WalletState>()(
         set((state) => ({
           wallets: state.wallets.map((w) =>
             w.address === address ? { ...w, isConnected } : w
+          ),
+        })),
+
+      setDetectedMultiplier: (address, multiplier) =>
+        set((state) => ({
+          wallets: state.wallets.map((w) =>
+            w.address === address ? { ...w, detectedMultiplier: multiplier } : w
           ),
         })),
 

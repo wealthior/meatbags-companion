@@ -1,6 +1,16 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Repeat, Sparkles, ExternalLink } from "lucide-react";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Repeat,
+  Sparkles,
+  ExternalLink,
+  Tag,
+  XCircle,
+  Gavel,
+  Flame,
+} from "lucide-react";
 import { useAllTransactions } from "@/hooks/use-transaction-history";
 import { useSolPrice } from "@/hooks/use-sol-price";
 import { GlitchText } from "@/components/shared/glitch-text";
@@ -13,7 +23,11 @@ const TX_TYPE_CONFIG: Record<TransactionType, { icon: typeof ArrowDownRight; lab
   BUY: { icon: ArrowDownRight, label: "Buy", color: "text-neon-green" },
   SELL: { icon: ArrowUpRight, label: "Sell", color: "text-blood" },
   TRANSFER: { icon: Repeat, label: "Transfer", color: "text-text-secondary" },
-  MINT: { icon: Sparkles, label: "Mint", color: "text-toxic-purple" },
+  MINT: { icon: Sparkles, label: "Mint", color: "text-gold" },
+  LIST: { icon: Tag, label: "List", color: "text-rust" },
+  DELIST: { icon: XCircle, label: "Delist", color: "text-text-muted" },
+  BID: { icon: Gavel, label: "Bid", color: "text-toxic-purple" },
+  BURN: { icon: Flame, label: "Burn", color: "text-blood" },
 };
 
 export default function HistoryPage() {

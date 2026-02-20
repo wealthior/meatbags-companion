@@ -82,7 +82,7 @@ export const BADGE_DEFINITIONS: readonly BadgeDefinition[] = [
   { id: "mask_orchid", name: "Orchid Mask", description: "Own a MeatBag with Orchid Mask", points: 250, isStackable: true, category: "stackable" },
   { id: "mask_navy", name: "Navy Mask", description: "Own a MeatBag with Navy Mask", points: 250, isStackable: true, category: "stackable" },
   { id: "mask_brown", name: "Brown Mask", description: "Own a MeatBag with Brown Mask", points: 300, isStackable: true, category: "stackable" },
-  // Legendary masks
+  // Legendary masks (Gold and GH-Gold are the same mask — both map to GH-Gold)
   { id: "mask_ghgold", name: "GH-Gold Mask", description: "Own a MeatBag with GH-Gold Mask", points: 1_500, isStackable: true, category: "stackable" },
   // Mythic masks
   { id: "mask_1of1", name: "1/1 Mask", description: "Own a MeatBag with a 1/1 Mask", points: 7_000, isStackable: true, category: "stackable" },
@@ -153,8 +153,14 @@ export const calculateDeadPoints = (badges: readonly EarnedBadge[]): number =>
 /**
  * Auto-detect one-time badges that can be determined from NFT data alone.
  * Badges like Shitlord, Raider, OG Holder etc. need external verification.
+ *
+ * @param isOriginalMinter - Whether the wallet is an original minter (detected by loyalty-detector).
+ *                           Used for OG Holder and Veteran badges.
  */
-const calculateAutoOneTimeBadges = (nfts: readonly MeatbagNft[]): string[] => {
+const calculateAutoOneTimeBadges = (
+  nfts: readonly MeatbagNft[],
+  isOriginalMinter = false,
+): string[] => {
   const earned: string[] = [];
   if (nfts.length === 0) return earned;
 
@@ -177,21 +183,30 @@ const calculateAutoOneTimeBadges = (nfts: readonly MeatbagNft[]): string[] => {
   if (totalDailyYield >= 100_000) earned.push("preparer");
   // Diamond Hands — 5+ NFTs, none listed
   if (nfts.length >= 5 && !hasListed) earned.push("diamond_hands");
+  // OG Holder — original minter still holds
+  if (isOriginalMinter) earned.push("og_holder");
+  // Veteran — original minter holding since mint (Mint was Oct 15 2024, so 90+ days has passed)
+  // For secondary buyers we can't determine hold duration yet, so only original minters qualify
+  if (isOriginalMinter) earned.push("veteran");
 
   return earned;
 };
 
 /**
  * Calculate complete loserboard stats for a set of NFTs
+ *
+ * @param isOriginalMinter - Whether the wallet minted at least one of its NFTs (from loyalty-detector).
+ *                           Enables OG Holder and Veteran badges.
  */
 export const calculateLoserboardStats = (
   nfts: readonly MeatbagNft[],
-  manualBadgeIds: readonly string[] = []
+  manualBadgeIds: readonly string[] = [],
+  isOriginalMinter = false,
 ): UserLoserboardStats => {
   const stackableBadges = calculateStackableBadges(nfts);
 
-  // Auto-detect one-time badges from NFT data
-  const autoBadgeIds = calculateAutoOneTimeBadges(nfts);
+  // Auto-detect one-time badges from NFT data + minter status
+  const autoBadgeIds = calculateAutoOneTimeBadges(nfts, isOriginalMinter);
   // Merge auto-detected + manually awarded (deduplicated)
   const allOneTimeIds = [...new Set([...autoBadgeIds, ...manualBadgeIds])];
 

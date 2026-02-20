@@ -1,10 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { X, ArrowDownRight, ArrowUpRight, Repeat, Sparkles, ExternalLink } from "lucide-react";
+import {
+  X,
+  ArrowDownRight,
+  ArrowUpRight,
+  Repeat,
+  Sparkles,
+  ExternalLink,
+  Tag,
+  XCircle,
+  Gavel,
+  Flame,
+} from "lucide-react";
 import type { WalletInteraction } from "@/types/wallet-interactions";
 import type { NftTransaction, TransactionType } from "@/types/transaction";
-import { shortenAddress, formatSol, formatUsd, formatDateTime } from "@/lib/utils/format";
+import { shortenAddress, formatSol, formatDateTime } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 
 interface InteractionDetailProps {
@@ -18,13 +29,21 @@ const TX_ICON: Record<TransactionType, typeof ArrowDownRight> = {
   SELL: ArrowUpRight,
   TRANSFER: Repeat,
   MINT: Sparkles,
+  LIST: Tag,
+  DELIST: XCircle,
+  BID: Gavel,
+  BURN: Flame,
 };
 
 const TX_COLOR: Record<TransactionType, string> = {
   BUY: "text-neon-green",
   SELL: "text-blood",
   TRANSFER: "text-text-secondary",
-  MINT: "text-toxic-purple",
+  MINT: "text-gold",
+  LIST: "text-rust",
+  DELIST: "text-text-muted",
+  BID: "text-toxic-purple",
+  BURN: "text-blood",
 };
 
 export function InteractionDetail({

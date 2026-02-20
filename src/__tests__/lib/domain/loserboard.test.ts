@@ -19,6 +19,8 @@ const makeMockNft = (maskColor: MaskColor): MeatbagNft => ({
   ownerWallet: "mock-owner",
   isHonorary: false,
   isSoulbound: false,
+  isStaked: false,
+  isListed: false,
   dailyYield: getBaseYield(maskColor),
   magicEdenUrl: "",
 });
@@ -92,7 +94,8 @@ describe("calculateStackableBadges", () => {
     expect(redBadge).toBeDefined();
     expect(redBadge!.count).toBe(2);
 
-    const goldBadge = badges.find((b) => b.badge.id === "mask_gold");
+    // Gold maps to GH-Gold (Gold IS GH-Gold)
+    const goldBadge = badges.find((b) => b.badge.id === "mask_ghgold");
     expect(goldBadge).toBeDefined();
     expect(goldBadge!.count).toBe(1);
   });
@@ -140,14 +143,14 @@ describe("calculateLoserboardStats", () => {
 
     expect(shitlordBadge).toBeDefined();
     expect(raiderBadge).toBeDefined();
-    // 75 (Red mask) + 500 (Shitlord) + 1000 (Raider)
-    expect(stats.deadPoints).toBe(75 + 500 + 1_000);
+    // 75 (Red mask) + 500 (Shitlord) + 1000 (Raider) + 750 (Collectoor auto-detected)
+    expect(stats.deadPoints).toBe(75 + 500 + 1_000 + 750);
   });
 });
 
 describe("BADGE_DEFINITIONS", () => {
-  it("has exactly 33 badges", () => {
-    expect(BADGE_DEFINITIONS).toHaveLength(33);
+  it("has exactly 37 badges", () => {
+    expect(BADGE_DEFINITIONS).toHaveLength(37);
   });
 
   it("has unique IDs", () => {

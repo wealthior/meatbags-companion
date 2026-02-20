@@ -6,6 +6,7 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Crown, Shield, Users, Plug, Loader2 } from "lucide-react";
 import { GlitchText } from "@/components/shared/glitch-text";
+import { WipBanner } from "@/components/shared/wip-banner";
 import { StatCard } from "@/components/shared/stat-card";
 import { PageLoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { formatNumber, shortenAddress } from "@/lib/utils/format";
@@ -85,6 +86,12 @@ export default function LeaderboardPage() {
           Verified holder rankings — the REAL holder list
         </p>
       </div>
+
+      {/* WIP Banner */}
+      <WipBanner
+        title="Leaderboard Beta"
+        subtitle="The verified holder ranking system is under active development. Wallet verification is functional but rankings may change as the system evolves."
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

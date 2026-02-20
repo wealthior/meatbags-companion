@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Grid3X3, LayoutList } from "lucide-react";
 import type { MeatbagNft, MaskColor } from "@/types/nft";
 import { NftCard } from "./nft-card";
+import { NftCardCompact } from "./nft-card-compact";
 import { TraitBadge } from "./trait-badge";
 import { MASK_COLORS_BY_YIELD } from "@/lib/utils/constants";
 import { cn } from "@/lib/utils/cn";
@@ -14,6 +15,7 @@ interface NftGridProps {
 }
 
 type SortOption = "name" | "yield-desc" | "yield-asc" | "wallet";
+type ViewMode = "grid" | "compact";
 
 export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
   const [search, setSearch] = useState("");
@@ -21,6 +23,7 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
   const [selectedWallet, setSelectedWallet] = useState<string | "all">("all");
   const [sortBy, setSortBy] = useState<SortOption>("yield-desc");
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   // Get unique wallets
   const uniqueWallets = useMemo(() => {
@@ -212,14 +215,40 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
         </div>
       )}
 
-      {/* Results count */}
+      {/* Results count + View toggle */}
       <div className="flex items-center justify-between">
         <p className="text-[10px] text-text-muted uppercase tracking-wider">
           {filteredNfts.length} meatbag{filteredNfts.length !== 1 ? "s" : ""} found
         </p>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={cn(
+              "p-1.5 rounded transition-colors cursor-pointer",
+              viewMode === "grid"
+                ? "text-neon-green bg-neon-green/10"
+                : "text-text-muted hover:text-text-primary"
+            )}
+            title="Grid view"
+          >
+            <Grid3X3 size={14} />
+          </button>
+          <button
+            onClick={() => setViewMode("compact")}
+            className={cn(
+              "p-1.5 rounded transition-colors cursor-pointer",
+              viewMode === "compact"
+                ? "text-neon-green bg-neon-green/10"
+                : "text-text-muted hover:text-text-primary"
+            )}
+            title="Compact view"
+          >
+            <LayoutList size={14} />
+          </button>
+        </div>
       </div>
 
-      {/* Grid */}
+      {/* Grid / Compact */}
       {filteredNfts.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-text-muted text-sm">
@@ -228,6 +257,12 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
           <p className="text-text-muted text-xs mt-1">
             No MeatBags match your filters.
           </p>
+        </div>
+      ) : viewMode === "compact" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+          {filteredNfts.map((nft) => (
+            <NftCardCompact key={nft.mintAddress} nft={nft} />
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
