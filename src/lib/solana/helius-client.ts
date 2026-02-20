@@ -280,7 +280,11 @@ export const fetchTransactionHistory = async (
     types?: string[];
   }
 ): Promise<ApiResult<NftTransaction[]>> => {
-  const { before, limit = 100, types = ["NFT_SALE", "NFT_TRANSFER"] } = options ?? {};
+  const {
+    before,
+    limit = 100,
+    types = ["NFT_SALE", "NFT_TRANSFER", "NFT_LISTING", "NFT_CANCEL_LISTING", "NFT_BID", "NFT_MINT", "BURN_NFT"],
+  } = options ?? {};
 
   try {
     const results = await Promise.allSettled(
@@ -333,14 +337,31 @@ export const fetchTransactionHistory = async (
 };
 
 /**
+ * Map Helius transaction type strings to our TransactionType.
+ */
+const HELIUS_TYPE_MAP: Record<string, TransactionType> = {
+  NFT_LISTING: "LIST",
+  NFT_CANCEL_LISTING: "DELIST",
+  NFT_BID: "BID",
+  NFT_GLOBAL_BID: "BID",
+  NFT_MINT: "MINT",
+  BURN_NFT: "BURN",
+};
+
+/**
  * Parse a Helius enhanced transaction into our NftTransaction type.
- * Handles both NFT_SALE (via events.nft) and NFT_TRANSFER (via tokenTransfers).
+ * Handles NFT_SALE, NFT_TRANSFER, NFT_LISTING, NFT_CANCEL_LISTING,
+ * NFT_BID, NFT_MINT, and BURN_NFT.
  */
 const parseHeliusTransaction = (tx: unknown): NftTransaction | null => {
   try {
     const t = tx as {
       signature: string;
       type: string;
+      description?: string;
+      source?: string;
+      fee?: number;
+      feePayer?: string;
       timestamp: number;
       nativeTransfers?: Array<{ fromUserAccount: string; toUserAccount: string; amount: number }>;
       tokenTransfers?: Array<{ fromUserAccount: string; toUserAccount: string; mint: string }>;
@@ -355,6 +376,10 @@ const parseHeliusTransaction = (tx: unknown): NftTransaction | null => {
         };
       };
     };
+
+    const description = t.description ?? t.events?.nft?.description;
+    const fee = t.fee ? t.fee / 1e9 : undefined;
+    const topSource = t.source ?? t.events?.nft?.source ?? "Unknown";
 
     // Handle NFT_TRANSFER — no nft event, use tokenTransfers
     if (t.type === "NFT_TRANSFER" || t.type === "TRANSFER") {
@@ -373,6 +398,32 @@ const parseHeliusTransaction = (tx: unknown): NftTransaction | null => {
         fromWallet: tokenTransfer.fromUserAccount ?? "",
         toWallet: tokenTransfer.toUserAccount ?? "",
         marketplace: "Transfer",
+        description,
+        fee,
+      };
+    }
+
+    // Handle listing, delist, bid, mint, burn — use mapped type
+    const mappedType = HELIUS_TYPE_MAP[t.type];
+    if (mappedType) {
+      const nftEvent = t.events?.nft;
+      const mint = nftEvent?.nfts?.[0]?.mint ?? t.tokenTransfers?.[0]?.mint ?? "";
+      const solAmount = nftEvent?.amount ? nftEvent.amount / 1e9 : 0;
+
+      return {
+        signature: t.signature,
+        type: mappedType,
+        mintAddress: mint,
+        nftName: "",
+        solAmount,
+        solPriceUsd: 0,
+        usdAmount: 0,
+        timestamp: t.timestamp,
+        fromWallet: nftEvent?.seller ?? t.feePayer ?? "",
+        toWallet: nftEvent?.buyer ?? "",
+        marketplace: topSource,
+        description,
+        fee,
       };
     }
 
@@ -397,7 +448,9 @@ const parseHeliusTransaction = (tx: unknown): NftTransaction | null => {
       timestamp: t.timestamp,
       fromWallet: nftEvent.seller ?? "",
       toWallet: nftEvent.buyer ?? "",
-      marketplace: nftEvent.source ?? "Unknown",
+      marketplace: nftEvent.source ?? topSource,
+      description,
+      fee,
     };
   } catch {
     return null;
