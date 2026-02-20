@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { execSync } from "child_process";
+import packageJson from "./package.json";
 
 // Resolve git SHA at build time for version display
 const gitSha = (() => {
@@ -12,6 +13,7 @@ const gitSha = (() => {
 
 const nextConfig: NextConfig = {
   env: {
+    NEXT_PUBLIC_APP_VERSION: packageJson.version,
     NEXT_PUBLIC_GIT_SHA: gitSha,
   },
   images: {
