@@ -13,6 +13,8 @@ import { BubbleChart } from "@/components/interactions/bubble-chart";
 import { InteractionsTable } from "@/components/interactions/interactions-table";
 import { InteractionDetail } from "@/components/interactions/interaction-detail";
 import { DateRangeFilter } from "@/components/interactions/date-range-filter";
+import { PnlSummary } from "@/components/interactions/pnl-summary";
+import { ActivityTimeline } from "@/components/interactions/activity-timeline";
 import { formatNumber, formatSol, shortenAddress } from "@/lib/utils/format";
 import type { PositionedBubble, WalletInteraction } from "@/types/wallet-interactions";
 
@@ -166,6 +168,19 @@ export default function InteractionsPage() {
         />
       </div>
 
+      {/* P&L Summary */}
+      {allTransactions && (
+        <div>
+          <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-3">
+            Trade Performance
+          </h3>
+          <PnlSummary
+            transactions={allTransactions}
+            trackedAddresses={trackedAddresses}
+          />
+        </div>
+      )}
+
       {/* Bubble Chart */}
       <div
         ref={containerRef}
@@ -239,6 +254,18 @@ export default function InteractionsPage() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Activity Timeline */}
+      {allTransactions && allTransactions.length > 0 && (
+        <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-border-default">
+            <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">
+              Recent Activity ({allTransactions.length})
+            </h3>
+          </div>
+          <ActivityTimeline transactions={allTransactions} maxItems={50} />
+        </div>
+      )}
     </div>
   );
 }

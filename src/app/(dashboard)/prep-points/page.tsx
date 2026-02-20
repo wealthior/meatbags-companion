@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { Zap, TrendingUp, Calendar, Target } from "lucide-react";
+import { Zap, TrendingUp, Calendar, Target, Loader2 } from "lucide-react";
 import { useAllNfts } from "@/hooks/use-nfts";
 import { useWalletStore } from "@/stores/wallet-store";
+import { useLoyaltyMultipliers } from "@/hooks/use-loyalty-multiplier";
 import { calculateWalletPrepPoints, aggregateAcrossWallets } from "@/lib/domain/prep-points";
 import { MASK_COLOR_CONFIG } from "@/lib/utils/constants";
 import { StatCard } from "@/components/shared/stat-card";
@@ -11,26 +12,39 @@ import { GlitchText } from "@/components/shared/glitch-text";
 import { TraitBadge } from "@/components/nft/trait-badge";
 import { PageLoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { formatNumber } from "@/lib/utils/format";
-import type { MaskColor } from "@/types/nft";
+import type { MaskColor, LoyaltyMultiplier } from "@/types/nft";
+import { cn } from "@/lib/utils/cn";
+
+const MULTIPLIER_LABELS: Record<number, { label: string; color: string }> = {
+  1.2: { label: "Presale 1.2x", color: "text-gold" },
+  1.1: { label: "Public Mint 1.1x", color: "text-neon-green" },
+  1.0: { label: "Secondary 1.0x", color: "text-text-muted" },
+};
 
 export default function PrepPointsPage() {
   const { data, isLoading } = useAllNfts();
   const wallets = useWalletStore((s) => s.wallets);
+  const { multipliers, isDetecting } = useLoyaltyMultipliers();
 
   const aggregated = useMemo(() => {
     if (!data?.byWallet) return null;
 
     const walletResults = wallets.map((w) => {
       const nfts = data.byWallet[w.address] ?? [];
+      const multiplier: LoyaltyMultiplier = multipliers[w.address] ?? 1.0;
       return {
         walletAddress: w.address,
         walletName: w.name,
-        points: calculateWalletPrepPoints(nfts),
+        multiplier,
+        points: calculateWalletPrepPoints(nfts, multiplier),
       };
     });
 
-    return aggregateAcrossWallets(walletResults);
-  }, [data, wallets]);
+    return {
+      ...aggregateAcrossWallets(walletResults),
+      walletDetails: walletResults,
+    };
+  }, [data, wallets, multipliers]);
 
   if (isLoading) return <PageLoadingSkeleton />;
   if (!aggregated) {
@@ -41,7 +55,7 @@ export default function PrepPointsPage() {
     );
   }
 
-  const { projections, byMaskColor, byWallet } = aggregated;
+  const { projections, byMaskColor, walletDetails } = aggregated;
 
   // Sort mask breakdown by total daily yield
   const maskBreakdown = Object.entries(byMaskColor)
@@ -55,6 +69,12 @@ export default function PrepPointsPage() {
         <GlitchText text="Prep Points" className="text-lg text-text-primary" />
         <p className="text-[10px] text-text-muted uppercase tracking-wider mt-1">
           Staking yield calculator
+          {isDetecting && (
+            <span className="inline-flex items-center gap-1 ml-2 text-gold">
+              <Loader2 size={9} className="animate-spin" />
+              Detecting multipliers...
+            </span>
+          )}
         </p>
       </div>
 
@@ -157,7 +177,7 @@ export default function PrepPointsPage() {
       </div>
 
       {/* Breakdown by Wallet */}
-      {Object.keys(byWallet).length > 1 && (
+      {walletDetails.length > 0 && (
         <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-border-default">
             <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">
@@ -169,30 +189,51 @@ export default function PrepPointsPage() {
               <thead>
                 <tr className="border-b border-border-default text-[10px] text-text-muted uppercase tracking-wider">
                   <th className="text-left px-4 py-2">Wallet</th>
+                  <th className="text-center px-4 py-2">Multiplier</th>
                   <th className="text-right px-4 py-2">Daily Yield</th>
                   <th className="text-right px-4 py-2">% of Total</th>
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(byWallet).map(([name, daily]) => (
-                  <tr
-                    key={name}
-                    className="border-b border-border-default/50 hover:bg-bg-hover/30 transition-colors"
-                  >
-                    <td className="px-4 py-2 text-xs text-text-secondary">
-                      {name}
-                    </td>
-                    <td className="text-right px-4 py-2 text-xs text-neon-green font-medium">
-                      {formatNumber(daily)}
-                    </td>
-                    <td className="text-right px-4 py-2 text-xs text-text-muted">
-                      {projections.daily > 0
-                        ? ((daily / projections.daily) * 100).toFixed(1)
-                        : "0"}
-                      %
-                    </td>
-                  </tr>
-                ))}
+                {walletDetails.map((wd) => {
+                  const label = MULTIPLIER_LABELS[wd.multiplier] ?? MULTIPLIER_LABELS[1.0];
+                  return (
+                    <tr
+                      key={wd.walletAddress}
+                      className="border-b border-border-default/50 hover:bg-bg-hover/30 transition-colors"
+                    >
+                      <td className="px-4 py-2 text-xs text-text-secondary">
+                        {wd.walletName}{" "}
+                        <span className="text-text-muted">
+                          ({wd.walletAddress.slice(0, 4)}...{wd.walletAddress.slice(-4)})
+                        </span>
+                      </td>
+                      <td className="text-center px-4 py-2">
+                        <span
+                          className={cn(
+                            "text-[9px] px-1.5 py-0.5 rounded border font-medium",
+                            wd.multiplier === 1.2
+                              ? "bg-gold/10 text-gold border-gold/20"
+                              : wd.multiplier === 1.1
+                                ? "bg-neon-green/10 text-neon-green border-neon-green/20"
+                                : "bg-bg-hover text-text-muted border-border-default"
+                          )}
+                        >
+                          {label.label}
+                        </span>
+                      </td>
+                      <td className="text-right px-4 py-2 text-xs text-neon-green font-medium">
+                        {formatNumber(wd.points.totalDaily)}
+                      </td>
+                      <td className="text-right px-4 py-2 text-xs text-text-muted">
+                        {projections.daily > 0
+                          ? ((wd.points.totalDaily / projections.daily) * 100).toFixed(1)
+                          : "0"}
+                        %
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

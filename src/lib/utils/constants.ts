@@ -55,6 +55,12 @@ export const TIER_CONFIGS: readonly TierConfig[] = [
   { tier: "Immortal", minPoints: 400_000, maxPoints: Infinity, color: "#9b30ff" },
 ];
 
+/** MeatBags mint phase timestamps (Unix seconds, UTC) */
+export const PRESALE_START = 1729008000; // Oct 15, 2024 16:00 UTC
+export const PRESALE_END = 1729011600; // Oct 15, 2024 17:00 UTC
+export const PUBLIC_MINT_START = 1729011720; // Oct 15, 2024 17:02 UTC
+export const PUBLIC_MINT_END = 1732726920; // Nov 27, 2024 17:02 UTC
+
 /** Helius RPC endpoint (with API key placeholder) */
 export const heliusRpcUrl = (apiKey: string) =>
   `https://mainnet.helius-rpc.com/?api-key=${apiKey}`;

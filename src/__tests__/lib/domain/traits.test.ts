@@ -202,6 +202,8 @@ const makeMockNft = (maskColor: MaskColor, mintAddress?: string): MeatbagNft => 
   ownerWallet: "mock-owner",
   isHonorary: false,
   isSoulbound: false,
+  isStaked: false,
+  isListed: false,
   dailyYield: getBaseYield(maskColor),
   magicEdenUrl: "",
 });

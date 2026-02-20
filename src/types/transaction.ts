@@ -1,4 +1,12 @@
-export type TransactionType = "BUY" | "SELL" | "TRANSFER" | "MINT";
+export type TransactionType =
+  | "BUY"
+  | "SELL"
+  | "TRANSFER"
+  | "MINT"
+  | "LIST"
+  | "DELIST"
+  | "BID"
+  | "BURN";
 
 export interface NftTransaction {
   readonly signature: string;
@@ -12,6 +20,8 @@ export interface NftTransaction {
   readonly fromWallet: string;
   readonly toWallet: string;
   readonly marketplace: string;
+  readonly description?: string;
+  readonly fee?: number;
 }
 
 export interface PortfolioSummary {

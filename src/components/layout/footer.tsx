@@ -14,7 +14,12 @@ export function Footer() {
     <footer className="border-t border-border-default bg-bg-surface/40 backdrop-blur-sm px-4 md:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
       <div className="flex items-center gap-2 text-[10px] text-text-muted uppercase tracking-wider">
         <span>MeatBags Companion</span>
-        <span className="text-neon-green/60">v{packageJson.version}</span>
+        <span className="text-neon-green/60">
+          v{packageJson.version}
+          {process.env.NEXT_PUBLIC_GIT_SHA && (
+            <span className="text-text-muted ml-1">({process.env.NEXT_PUBLIC_GIT_SHA})</span>
+          )}
+        </span>
       </div>
 
       <div className="flex items-center gap-4">

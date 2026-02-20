@@ -1,6 +1,19 @@
 import type { NextConfig } from "next";
+import { execSync } from "child_process";
+
+// Resolve git SHA at build time for version display
+const gitSha = (() => {
+  try {
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "dev";
+  }
+})();
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_GIT_SHA: gitSha,
+  },
   images: {
     remotePatterns: [
       {
