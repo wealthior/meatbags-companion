@@ -88,11 +88,25 @@ describe("groupBySeries", () => {
     expect(result["Shit Box"]).toHaveLength(1);
   });
 
+  it("groups special series geocaches correctly", () => {
+    const geocaches = [
+      makeMockGeocache("Common", "Halloween"),
+      makeMockGeocache("Rare", "Merry Crisis"),
+      makeMockGeocache("Common", "Halloween"),
+    ];
+
+    const result = groupBySeries(geocaches);
+    expect(result["Halloween"]).toHaveLength(2);
+    expect(result["Merry Crisis"]).toHaveLength(1);
+  });
+
   it("returns empty arrays when no geocaches", () => {
     const result = groupBySeries([]);
     expect(result["Bounty Box I"]).toHaveLength(0);
     expect(result["Bounty Box II"]).toHaveLength(0);
     expect(result["Shit Box"]).toHaveLength(0);
+    expect(result["Halloween"]).toHaveLength(0);
+    expect(result["Merry Crisis"]).toHaveLength(0);
   });
 });
 
@@ -239,11 +253,15 @@ describe("calculateGeocacheStats", () => {
     expect(result.bySeries["Bounty Box I"]).toBe(0);
     expect(result.bySeries["Bounty Box II"]).toBe(0);
     expect(result.bySeries["Shit Box"]).toBe(0);
+    expect(result.bySeries["Halloween"]).toBe(0);
+    expect(result.bySeries["Merry Crisis"]).toBe(0);
     expect(result.burnedByTier.Common).toBe(0);
     expect(result.burnedByTier.Rare).toBe(0);
     expect(result.burnedBySeries["Bounty Box I"]).toBe(0);
     expect(result.burnedBySeries["Bounty Box II"]).toBe(0);
     expect(result.burnedBySeries["Shit Box"]).toBe(0);
+    expect(result.burnedBySeries["Halloween"]).toBe(0);
+    expect(result.burnedBySeries["Merry Crisis"]).toBe(0);
     expect(result.netPnlSol).toBe(0);
     expect(result.tradeCount).toBe(0);
   });

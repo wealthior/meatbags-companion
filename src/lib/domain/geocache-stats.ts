@@ -36,6 +36,8 @@ export const groupBySeries = (
     "Bounty Box I": [],
     "Bounty Box II": [],
     "Shit Box": [],
+    "Halloween": [],
+    "Merry Crisis": [],
   };
 
   for (const gc of geocaches) {
@@ -127,6 +129,8 @@ export const calculateGeocacheStats = (
     "Bounty Box I": 0,
     "Bounty Box II": 0,
     "Shit Box": 0,
+    "Halloween": 0,
+    "Merry Crisis": 0,
   };
 
   for (const gc of held) {
@@ -140,6 +144,8 @@ export const calculateGeocacheStats = (
     "Bounty Box I": 0,
     "Bounty Box II": 0,
     "Shit Box": 0,
+    "Halloween": 0,
+    "Merry Crisis": 0,
   };
 
   for (const gc of burned) {

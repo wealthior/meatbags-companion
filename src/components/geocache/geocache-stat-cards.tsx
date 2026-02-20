@@ -7,13 +7,15 @@ import { formatSol, formatNumber } from "@/lib/utils/format";
 
 interface GeocacheStatCardsProps {
   stats: GeocacheStats;
+  /** Whether transaction data is still loading (affects Bought/Sold/P&L display) */
+  txLoading?: boolean;
 }
 
 /**
  * Grid of stat cards showing per-wallet GeoCaches statistics.
  * Displays: Held, Opened/Burned, Bought, Sold, Listed, Net P&L.
  */
-export function GeocacheStatCards({ stats }: GeocacheStatCardsProps) {
+export function GeocacheStatCards({ stats, txLoading }: GeocacheStatCardsProps) {
   const isProfitable = stats.netPnlSol >= 0;
 
   return (
@@ -32,15 +34,15 @@ export function GeocacheStatCards({ stats }: GeocacheStatCardsProps) {
       />
       <StatCard
         label="Bought"
-        value={formatNumber(stats.totalBought)}
-        subValue={stats.totalSpentSol > 0 ? formatSol(stats.totalSpentSol) : undefined}
+        value={txLoading ? "..." : formatNumber(stats.totalBought)}
+        subValue={txLoading ? "Loading..." : stats.totalSpentSol > 0 ? formatSol(stats.totalSpentSol) : undefined}
         icon={ShoppingCart}
         accent="gold"
       />
       <StatCard
         label="Sold"
-        value={formatNumber(stats.totalSold)}
-        subValue={stats.totalEarnedSol > 0 ? formatSol(stats.totalEarnedSol) : undefined}
+        value={txLoading ? "..." : formatNumber(stats.totalSold)}
+        subValue={txLoading ? "Loading..." : stats.totalEarnedSol > 0 ? formatSol(stats.totalEarnedSol) : undefined}
         icon={DollarSign}
         accent="purple"
       />
@@ -52,8 +54,8 @@ export function GeocacheStatCards({ stats }: GeocacheStatCardsProps) {
       />
       <StatCard
         label="Net P&L"
-        value={stats.tradeCount > 0 ? `${isProfitable ? "+" : ""}${formatSol(stats.netPnlSol)}` : "—"}
-        subValue={stats.tradeCount > 0 ? `${stats.buyCount}B / ${stats.sellCount}S` : "No trades"}
+        value={txLoading ? "..." : stats.tradeCount > 0 ? `${isProfitable ? "+" : ""}${formatSol(stats.netPnlSol)}` : "—"}
+        subValue={txLoading ? "Loading..." : stats.tradeCount > 0 ? `${stats.buyCount}B / ${stats.sellCount}S` : "No trades"}
         icon={TrendingUp}
         accent={isProfitable ? "green" : "rust"}
       />

@@ -45,7 +45,7 @@ function DesktopSidebar() {
       initial={false}
       animate={{ width: sidebarOpen ? 220 : 60 }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
-      className="fixed left-0 top-0 bottom-0 z-40 bg-bg-surface border-r border-border-default hidden lg:flex flex-col"
+      className="fixed left-0 top-0 bottom-0 z-40 bg-bg-surface border-r border-border-default hidden lg:flex flex-col overflow-hidden"
     >
       {/* Logo */}
       <div className="h-14 flex items-center px-4 border-b border-border-default">
@@ -79,7 +79,7 @@ function DesktopSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");

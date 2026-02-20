@@ -47,6 +47,18 @@ export function StatSkeleton() {
   );
 }
 
+/** Inline loading indicator for sections that load after initial page render */
+export function SectionLoadingIndicator({ label = "Loading..." }: { label?: string }) {
+  return (
+    <div className="flex items-center gap-2 py-2">
+      <div className="w-1.5 h-1.5 rounded-full bg-neon-green animate-pulse" />
+      <span className="text-[10px] text-text-muted uppercase tracking-wider animate-pulse">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 export function PageLoadingSkeleton() {
   return (
     <div className="space-y-6">

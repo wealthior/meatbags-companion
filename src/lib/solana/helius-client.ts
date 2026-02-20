@@ -3,7 +3,17 @@ import type { GeocacheNft, GeocacheTier, GeocacheSeries } from "@/types/geocache
 import type { NftTransaction, TransactionType } from "@/types/transaction";
 import type { ApiResult } from "@/types/api";
 import { ok, err } from "@/types/api";
-import { COLLECTION_ADDRESS, GEOCACHE_COLLECTION_ADDRESS, heliusDasUrl, MAGICEDEN_ITEM_URL } from "@/lib/utils/constants";
+import {
+  COLLECTION_ADDRESS,
+  GEOCACHE_COLLECTION_ADDRESS,
+  GEOCACHE_AUTHORITY_NEW,
+  GEOCACHE_HALLOWEEN_START,
+  GEOCACHE_HALLOWEEN_END,
+  GEOCACHE_MERRY_CRISIS_START,
+  GEOCACHE_MERRY_CRISIS_END,
+  heliusDasUrl,
+  MAGICEDEN_ITEM_URL,
+} from "@/lib/utils/constants";
 import { getMaskColorFromTraits, isHonoraryNft, isSoulboundNft } from "@/lib/domain/traits";
 import { getBaseYield } from "@/lib/domain/traits";
 import { reportHeliusFailure, reportHeliusSuccess } from "./connection";
@@ -360,18 +370,21 @@ const MARKETPLACE_PROGRAMS = new Set([
  * geocache-related ones by checking if the collection address appears in
  * instruction accounts. Then we classify as BUY/SELL/BURN/TRANSFER.
  *
- * Paginates up to `maxPages` pages of 100 TXs each (default: 10 = 1000 TXs).
+ * Uses smart stopping: stops after `emptyPageThreshold` consecutive pages
+ * with 0 geocache transactions (default: 5). Hard limit at `maxPages` (default: 50).
  */
 export const fetchGeocacheTransactions = async (
   apiKey: string,
   address: string,
-  maxPages = 10,
+  maxPages = 50,
+  emptyPageThreshold = 5,
 ): Promise<ApiResult<NftTransaction[]>> => {
   const PAGE_LIMIT = 100;
 
   try {
     const allTxns: NftTransaction[] = [];
     let before: string | undefined;
+    let consecutiveEmptyPages = 0;
 
     for (let page = 0; page < maxPages; page++) {
       const url = new URL(`https://api.helius.xyz/v0/addresses/${address}/transactions`);
@@ -390,10 +403,24 @@ export const fetchGeocacheTransactions = async (
       if (rawTxns.length === 0) break;
 
       // Filter to geocache-related transactions
+      let pageGcCount = 0;
       for (const raw of rawTxns) {
         if (!isGeocacheTx(raw, GEOCACHE_COLLECTION_ADDRESS)) continue;
         const parsed = parseGeocacheTx(raw, address);
-        if (parsed) allTxns.push(parsed);
+        if (parsed) {
+          allTxns.push(parsed);
+          pageGcCount++;
+        }
+      }
+
+      // Smart stopping: if no geocache txs found on this page, increment counter.
+      // Stop after `emptyPageThreshold` consecutive empty pages to avoid
+      // scanning the entire wallet history when older txs are all non-geocache.
+      if (pageGcCount === 0) {
+        consecutiveEmptyPages++;
+        if (consecutiveEmptyPages >= emptyPageThreshold) break;
+      } else {
+        consecutiveEmptyPages = 0;
       }
 
       // Pagination: use last signature as cursor
@@ -479,8 +506,10 @@ const parseGeocacheTx = (tx: RawHeliusTx, walletAddress: string): NftTransaction
     let toWallet = "";
     let solAmount = 0;
 
-    if (hasMarketplace && absSolChange > 0.001) {
+    if (hasMarketplace && absSolChange > 0.01) {
       // Marketplace trade — determine buy vs sell from SOL flow
+      // Threshold at 0.01 SOL to exclude listing/delisting rent refunds (~0.0035 SOL)
+      // which are NOT real trades but get misclassified because marketplace programs are involved.
       if (walletSolChange < 0) {
         // Wallet lost SOL → bought
         type = "BUY";
@@ -494,6 +523,13 @@ const parseGeocacheTx = (tx: RawHeliusTx, walletAddress: string): NftTransaction
         toWallet = "marketplace";
         solAmount = absSolChange;
       }
+    } else if (hasMarketplace && absSolChange <= 0.01) {
+      // Marketplace tx with tiny SOL change (rent refund from listing/delisting).
+      // Classify as LIST or DELIST — NOT as a trade.
+      type = walletSolChange > 0 ? "DELIST" : "LIST";
+      fromWallet = walletAddress;
+      toWallet = "";
+      solAmount = 0;
     } else if (coreInst && absSolChange < 0.005) {
       // Core program tx with no significant SOL change.
       // If the wallet is the fee payer, it initiated the action → BURN (opening geocache).
@@ -658,7 +694,7 @@ const parseHeliusTransaction = (tx: unknown): NftTransaction | null => {
 const VALID_GEOCACHE_TIERS = new Set<string>(["Common", "Rare"]);
 
 /** Valid geocache series values */
-const VALID_GEOCACHE_SERIES = new Set<string>(["Bounty Box I", "Bounty Box II", "Shit Box"]);
+const VALID_GEOCACHE_SERIES = new Set<string>(["Bounty Box I", "Bounty Box II", "Shit Box", "Halloween", "Merry Crisis"]);
 
 /**
  * Check if a DAS asset belongs to the GeoCaches collection
@@ -713,10 +749,195 @@ const parseGeocacheAsset = (asset: HeliusAsset): GeocacheNft | null => {
       isListed,
       listedMarketplace: marketplace ?? undefined,
       magicEdenUrl: `${MAGICEDEN_ITEM_URL}/${asset.id}`,
+      _authority: asset.authorities?.[0]?.address,
     };
   } catch {
     return null;
   }
+};
+
+/** Solana RPC getSignaturesForAddress response item */
+interface SolanaSignature {
+  signature: string;
+  slot: number;
+  err: unknown;
+  memo: string | null;
+  blockTime: number | null;
+  confirmationStatus: string;
+}
+
+/** Metaplex Core program address */
+const CORE_PROGRAM_ID = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+
+/**
+ * Determine the original series of a burned geocache whose metadata was changed.
+ *
+ * Detection strategy (two-step):
+ * 1. **October 2025**: Date alone → Halloween. Only Halloween was minted under the
+ *    new authority in October, so date-based detection is 100% reliable.
+ * 2. **December 2025 – February 2026**: Date alone is NOT sufficient because BB2 geocaches
+ *    were also minted in this period. Instead, we check for an UpdateV1 instruction (`L`)
+ *    in the TX history. If found, the metadata was changed (MC → BB2) before burn → Merry Crisis.
+ *    If not found, it's a genuine BB2.
+ * 3. **Other periods**: Return null → trust the DAS metadata.
+ */
+const inferOriginalSeries = (
+  creationTimestamp: number,
+  hasMetadataChange: boolean,
+): GeocacheSeries | null => {
+  // October 2025 = Halloween (date alone is reliable — only Halloween minted under new authority)
+  if (creationTimestamp >= GEOCACHE_HALLOWEEN_START && creationTimestamp < GEOCACHE_HALLOWEEN_END) {
+    return "Halloween";
+  }
+  // December 2025 – February 2026 = Merry Crisis ONLY if metadata was changed (UpdateV1 found)
+  // Without UpdateV1 confirmation, it's a genuine BB2 — don't reclassify
+  if (
+    creationTimestamp >= GEOCACHE_MERRY_CRISIS_START &&
+    creationTimestamp < GEOCACHE_MERRY_CRISIS_END &&
+    hasMetadataChange
+  ) {
+    return "Merry Crisis";
+  }
+  return null; // Not a special series — trust the DAS metadata
+};
+
+/**
+ * Make a JSON-RPC call to the Helius/Solana RPC endpoint.
+ */
+const rpcCall = async (apiKey: string, method: string, params: unknown[]): Promise<unknown> => {
+  const response = await fetch(heliusDasUrl(apiKey), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "meatbags-companion-gc-resolve",
+      method,
+      params,
+    }),
+  });
+  if (!response.ok) return null;
+  const data = await response.json();
+  return data.result ?? null;
+};
+
+/**
+ * Check if a burned geocache had its metadata changed via UpdateV1.
+ * When the game "opens" a Halloween or Merry Crisis geocache, it sends an UpdateV1
+ * instruction (discriminator "L") on the Core program to change the series to BB1/BB2.
+ *
+ * We check all signatures between the first (create) and last (burn) for this instruction.
+ * Returns true if any middle TX contains the UpdateV1 instruction.
+ */
+const detectMetadataChange = async (
+  apiKey: string,
+  mintAddress: string,
+  signatures: readonly SolanaSignature[],
+): Promise<boolean> => {
+  // Need at least 3 sigs for a middle TX to exist (create + updateV1 + burn)
+  if (signatures.length < 3) return false;
+
+  // Check each signature between oldest (create) and newest (burn) for UpdateV1
+  for (let i = 1; i < signatures.length - 1; i++) {
+    try {
+      const tx = await rpcCall(apiKey, "getTransaction", [
+        signatures[i].signature,
+        { encoding: "json", maxSupportedTransactionVersion: 0 },
+      ]) as { transaction?: { message?: { accountKeys?: string[]; instructions?: Array<{ programIdIndex?: number; data?: string }> } }; meta?: { innerInstructions?: Array<{ instructions: Array<{ programIdIndex?: number; data?: string }> }> } } | null;
+
+      if (!tx?.transaction?.message) continue;
+
+      const keys = tx.transaction.message.accountKeys ?? [];
+      const instructions = tx.transaction.message.instructions ?? [];
+
+      // Check main instructions
+      for (const ix of instructions) {
+        if (
+          ix.programIdIndex !== undefined &&
+          keys[ix.programIdIndex] === CORE_PROGRAM_ID &&
+          ix.data === "L"
+        ) {
+          return true;
+        }
+      }
+
+      // Check inner instructions
+      if (tx.meta?.innerInstructions) {
+        for (const inner of tx.meta.innerInstructions) {
+          for (const ix of inner.instructions) {
+            if (
+              ix.programIdIndex !== undefined &&
+              keys[ix.programIdIndex] === CORE_PROGRAM_ID &&
+              ix.data === "L"
+            ) {
+              return true;
+            }
+          }
+        }
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return false;
+};
+
+/**
+ * Resolve the original series for burned geocaches whose metadata was changed.
+ *
+ * Two-phase detection:
+ * 1. Get signatures to determine creation timestamp
+ * 2. For Halloween period (Oct 2025): date alone is sufficient
+ * 3. For MC/BB2 overlap period (Dec 2025–Feb 2026): additionally check for UpdateV1
+ *    instruction in the TX history to confirm metadata was actually changed
+ *
+ * Returns a Map of mintAddress → corrected GeocacheSeries.
+ * Only includes entries where the original series differs from current DAS metadata.
+ */
+const resolveOriginalSeries = async (
+  apiKey: string,
+  burnedGeocaches: readonly GeocacheNft[],
+): Promise<Map<string, GeocacheSeries>> => {
+  const corrections = new Map<string, GeocacheSeries>();
+
+  for (const gc of burnedGeocaches) {
+    try {
+      // Step 1: Get all signatures to determine creation timestamp
+      const sigResult = await rpcCall(apiKey, "getSignaturesForAddress", [
+        gc.mintAddress,
+        { limit: 100 },
+      ]) as SolanaSignature[] | null;
+
+      const sigs = sigResult ?? [];
+      if (sigs.length === 0) continue;
+
+      // The oldest signature (last in array) is the creation TX
+      const oldest = sigs[sigs.length - 1];
+      if (!oldest.blockTime) continue;
+
+      // Step 2: Determine if metadata was changed (only needed for MC overlap period)
+      const inMerryCrisisWindow =
+        oldest.blockTime >= GEOCACHE_MERRY_CRISIS_START &&
+        oldest.blockTime < GEOCACHE_MERRY_CRISIS_END;
+
+      let hasMetadataChange = false;
+      if (inMerryCrisisWindow) {
+        // MC/BB2 overlap — need UpdateV1 confirmation
+        hasMetadataChange = await detectMetadataChange(apiKey, gc.mintAddress, sigs);
+      }
+
+      // Step 3: Infer original series
+      const originalSeries = inferOriginalSeries(oldest.blockTime, hasMetadataChange);
+      if (originalSeries && originalSeries !== gc.series) {
+        corrections.set(gc.mintAddress, originalSeries);
+      }
+    } catch {
+      // Best-effort — skip assets that fail
+      continue;
+    }
+  }
+
+  return corrections;
 };
 
 /**
@@ -731,8 +952,9 @@ export const fetchGeocachesByOwner = async (
 
   try {
     const allGeocaches: GeocacheNft[] = [];
-    let page = 1;
 
+    // --- Phase 1: Fetch HELD geocaches via getAssetsByOwner ---
+    let page = 1;
     while (true) {
       const response = await fetch(heliusDasUrl(apiKey), {
         method: "POST",
@@ -795,7 +1017,106 @@ export const fetchGeocachesByOwner = async (
       page++;
     }
 
-    console.log(`[helius] Found ${allGeocaches.length} GeoCaches for ${ownerAddress.slice(0, 8)}...`);
+    const heldCount = allGeocaches.length;
+
+    // --- Phase 2: Fetch BURNED geocaches via searchAssets (burnt: true) ---
+    // getAssetsByOwner only returns currently-held assets. To get burned/opened
+    // geocaches that belonged to this wallet, we use searchAssets with burnt flag.
+    // The DAS API tracks the last owner before burn.
+    const seenMints = new Set(allGeocaches.map((gc) => gc.mintAddress));
+    let burnPage = 1;
+
+    while (true) {
+      const burnResponse = await fetch(heliusDasUrl(apiKey), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: "meatbags-companion-geocaches-burned",
+          method: "searchAssets",
+          params: {
+            ownerAddress,
+            grouping: ["collection", GEOCACHE_COLLECTION_ADDRESS],
+            burnt: true,
+            page: burnPage,
+            limit: PAGE_LIMIT,
+          },
+        }),
+      });
+
+      if (!burnResponse.ok) {
+        // Burned fetch is best-effort — log warning but don't fail
+        console.warn(`[helius] Failed to fetch burned GeoCaches (page ${burnPage}): ${burnResponse.status}`);
+        break;
+      }
+
+      let burnData: HeliusDasResponse;
+      try {
+        const raw = await burnResponse.json();
+        if (raw.error) {
+          console.warn(`[helius] Burned GeoCaches RPC error: ${raw.error?.message ?? JSON.stringify(raw.error)}`);
+          break;
+        }
+        burnData = raw;
+      } catch {
+        console.warn(`[helius] Failed to parse burned GeoCaches response (page ${burnPage})`);
+        break;
+      }
+      reportHeliusSuccess();
+
+      const burnedItems = burnData.result.items;
+      let burnSkipped = 0;
+
+      for (const item of burnedItems) {
+        // Skip duplicates (shouldn't happen, but be safe)
+        if (seenMints.has(item.id)) continue;
+        seenMints.add(item.id);
+
+        const parsed = parseGeocacheAsset(item);
+        if (parsed) {
+          allGeocaches.push(parsed);
+        } else {
+          burnSkipped++;
+        }
+      }
+
+      if (burnSkipped > 0) {
+        console.warn(`[helius] Skipped ${burnSkipped}/${burnedItems.length} burned GeoCaches for ${ownerAddress} (page ${burnPage})`);
+      }
+
+      if (burnedItems.length < PAGE_LIMIT) break;
+      burnPage++;
+    }
+
+    const burnedCount = allGeocaches.length - heldCount;
+
+    // --- Phase 3: Resolve original series for burned geocaches with new authority ---
+    // When a geocache is "opened" in-game, the metadata is updated from its original
+    // series (Halloween, Merry Crisis) to a generic one (BB1/BB2) via UpdateV1 before burn.
+    // The DAS API shows only the post-update metadata. To detect the ORIGINAL series:
+    // - Halloween (Oct 2025): creation timestamp alone is sufficient
+    // - Merry Crisis (Dec 2025–Feb 2026): requires UpdateV1 instruction detection
+    //   because BB2 was also minted in the same period
+    const burnedNewAuth = allGeocaches.filter(
+      (gc) => gc.isBurned && gc._authority === GEOCACHE_AUTHORITY_NEW,
+    );
+
+    if (burnedNewAuth.length > 0) {
+      const resolved = await resolveOriginalSeries(apiKey, burnedNewAuth);
+      let correctedCount = 0;
+      for (const [mintAddress, originalSeries] of resolved) {
+        const gc = allGeocaches.find((g) => g.mintAddress === mintAddress);
+        if (gc && gc.series !== originalSeries) {
+          (gc as { series: GeocacheSeries }).series = originalSeries;
+          correctedCount++;
+        }
+      }
+      if (correctedCount > 0) {
+        console.log(`[helius] Corrected original series for ${correctedCount}/${burnedNewAuth.length} burned GeoCaches`);
+      }
+    }
+
+    console.log(`[helius] Found ${allGeocaches.length} GeoCaches for ${ownerAddress.slice(0, 8)}... (${heldCount} held, ${burnedCount} burned/opened)`);
     return ok({ items: allGeocaches, total: allGeocaches.length });
   } catch (error) {
     reportHeliusFailure();

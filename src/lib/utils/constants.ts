@@ -84,6 +84,36 @@ export const GEOCACHE_MAGICEDEN_SLUG = "meatbags_geocache";
 /** GeoCaches MagicEden collection URL */
 export const GEOCACHE_MAGICEDEN_COLLECTION_URL = "https://magiceden.io/marketplace/meatbags_geocache";
 
+/**
+ * GeoCaches update authority for newer series (BB2, Halloween, Merry Crisis).
+ * When a geocache is "opened" (burned in-game), its metadata is updated
+ * from the original series to a generic one (BB1/BB2) before burn.
+ * Assets with this authority require creation-date analysis to determine
+ * the original series for burned geocaches.
+ */
+export const GEOCACHE_AUTHORITY_NEW = "9DyzDFsfsgtvufA3oJWMgZyUpPx9aGbG2K8MVGButECH";
+
+/**
+ * GeoCaches update authority for original series (BB1, Shit Box).
+ * Assets with this authority retain their original series metadata even after burn.
+ */
+export const GEOCACHE_AUTHORITY_ORIGINAL = "7fPAiHGquVMHp8bJCpQPR43He5M5AAN7DPCbWp8x2RW7";
+
+/**
+ * Halloween geocaches were minted during October 2025.
+ * Burned Halloween geocaches have their metadata changed to BB1/BB2 but can be
+ * identified by their creation timestamp falling within this period.
+ */
+export const GEOCACHE_HALLOWEEN_START = new Date("2025-10-01T00:00:00Z").getTime() / 1000;
+export const GEOCACHE_HALLOWEEN_END = new Date("2025-11-01T00:00:00Z").getTime() / 1000;
+
+/**
+ * Merry Crisis geocaches were minted from December 2025 through February 2026.
+ * The minting period spanned multiple months (Dec 2025 → Feb 2026).
+ */
+export const GEOCACHE_MERRY_CRISIS_START = new Date("2025-12-01T00:00:00Z").getTime() / 1000;
+export const GEOCACHE_MERRY_CRISIS_END = new Date("2026-03-01T00:00:00Z").getTime() / 1000;
+
 /** Verification message template for leaderboard */
 export const VERIFICATION_MESSAGE = (walletAddress: string, timestamp: number) =>
   `MeatBags Companion: Verify ownership of ${walletAddress} at ${timestamp}`;

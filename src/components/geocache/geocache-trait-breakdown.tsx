@@ -23,6 +23,8 @@ const SERIES_CONFIG: Record<GeocacheSeries, { label: string; color: string; bgCo
   "Bounty Box I": { label: "Bounty Box I", color: "text-neon-green", bgColor: "bg-neon-green/20" },
   "Bounty Box II": { label: "Bounty Box II", color: "text-rust", bgColor: "bg-rust/20" },
   "Shit Box": { label: "Shit Box", color: "text-toxic-purple", bgColor: "bg-toxic-purple/20" },
+  "Halloween": { label: "Halloween", color: "text-[#ff6b00]", bgColor: "bg-[#ff6b00]/20" },
+  "Merry Crisis": { label: "Merry Crisis", color: "text-[#e53e3e]", bgColor: "bg-[#e53e3e]/20" },
 };
 
 /**
@@ -53,33 +55,35 @@ function TraitBar({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className={cn("text-[10px] font-medium uppercase tracking-wider", color)}>
+        <span className={cn("text-xs font-semibold uppercase tracking-wider", color)}>
           {label}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {hasBurned && (
-            <span className="text-[9px] text-rust/70">
-              {burnedCount} opened ({burnedPct.toFixed(0)}%)
+            <span className="text-[11px] text-rust font-medium">
+              {burnedCount} opened
+              <span className="text-rust/70 ml-0.5">({burnedPct.toFixed(0)}%)</span>
             </span>
           )}
-          <span className="text-[10px] text-text-muted">
-            {count} held ({pct.toFixed(0)}%)
+          <span className="text-[11px] text-text-secondary font-medium">
+            {count} held
+            <span className="text-text-muted ml-0.5">({pct.toFixed(0)}%)</span>
           </span>
         </div>
       </div>
       {/* Stacked bars: held on top, burned below */}
       <div className="space-y-0.5">
-        <div className="h-1.5 rounded-full bg-bg-hover overflow-hidden">
+        <div className="h-2 rounded-full bg-bg-hover overflow-hidden">
           <div
             className={cn("h-full rounded-full transition-all duration-500", bgColor)}
-            style={{ width: `${pct}%` }}
+            style={{ width: `${Math.max(pct, 1)}%` }}
           />
         </div>
         {hasBurned && (
-          <div className="h-1 rounded-full bg-bg-hover overflow-hidden">
+          <div className="h-1.5 rounded-full bg-bg-hover overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-500 bg-rust/30"
-              style={{ width: `${burnedPct}%` }}
+              className="h-full rounded-full transition-all duration-500 bg-rust/40"
+              style={{ width: `${Math.max(burnedPct, 1)}%` }}
             />
           </div>
         )}
@@ -106,24 +110,24 @@ export function GeocacheTraitBreakdown({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Tier Distribution */}
       <div className="bg-bg-surface border border-border-default rounded-lg p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-[10px] font-bold text-text-primary uppercase tracking-wider">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider">
             Tier Distribution
           </h4>
           {totalBurned > 0 && (
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-1.5 rounded-full bg-text-secondary/20" />
-                <span className="text-[8px] text-text-muted uppercase">Held</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2 rounded-full bg-text-secondary/30" />
+                <span className="text-[10px] text-text-secondary uppercase">Held</span>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-1 rounded-full bg-rust/30" />
-                <span className="text-[8px] text-text-muted uppercase">Opened</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-1.5 rounded-full bg-rust/40" />
+                <span className="text-[10px] text-text-secondary uppercase">Opened</span>
               </div>
             </div>
           )}
         </div>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {(Object.keys(TIER_CONFIG) as GeocacheTier[]).map((tier) => {
             const config = TIER_CONFIG[tier];
             return (
@@ -144,24 +148,24 @@ export function GeocacheTraitBreakdown({
 
       {/* Series Distribution */}
       <div className="bg-bg-surface border border-border-default rounded-lg p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-[10px] font-bold text-text-primary uppercase tracking-wider">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider">
             Series Distribution
           </h4>
           {totalBurned > 0 && (
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-1.5 rounded-full bg-neon-green/20" />
-                <span className="text-[8px] text-text-muted uppercase">Held</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2 rounded-full bg-neon-green/20" />
+                <span className="text-[10px] text-text-secondary uppercase">Held</span>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-1 rounded-full bg-rust/30" />
-                <span className="text-[8px] text-text-muted uppercase">Opened</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-1.5 rounded-full bg-rust/40" />
+                <span className="text-[10px] text-text-secondary uppercase">Opened</span>
               </div>
             </div>
           )}
         </div>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {(Object.keys(SERIES_CONFIG) as GeocacheSeries[]).map((series) => {
             const config = SERIES_CONFIG[series];
             return (

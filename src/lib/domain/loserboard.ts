@@ -1,6 +1,6 @@
 import type { LoserboardTier, TierConfig, BadgeDefinition, UserLoserboardStats, EarnedBadge } from "@/types/loserboard";
 import type { MeatbagNft } from "@/types/nft";
-import type { GeocacheNft } from "@/types/geocache";
+import type { GeocacheNft, GeocacheSeries } from "@/types/geocache";
 import { TIER_CONFIGS, MASK_COLOR_CONFIG } from "@/lib/utils/constants";
 
 /**
@@ -88,8 +88,16 @@ export const BADGE_DEFINITIONS: readonly BadgeDefinition[] = [
   // Mythic masks
   { id: "mask_1of1", name: "1/1 Mask", description: "Own a MeatBag with a 1/1 Mask", points: 7_000, isStackable: true, category: "stackable" },
   { id: "mask_nothing", name: "Maskless", description: "Own a MeatBag with No Mask", points: 7_700, isStackable: true, category: "stackable" },
-  // Other stackable
-  { id: "geocache_rare", name: "Rare Geocache", description: "Find a rare geocache item", points: 500, isStackable: true, category: "stackable" },
+  // Geocache Box Breaker badges — stackable, split by tier
+  // Regular geocaches (Bounty Box I, Bounty Box II, Shit Box)
+  { id: "geocache_common", name: "Common Box Breaker", description: "Break open a common loot box", points: 75, isStackable: true, category: "stackable" },
+  { id: "geocache_rare", name: "Rare Box Breaker", description: "Break open a rare loot box", points: 125, isStackable: true, category: "stackable" },
+  // Halloween geocaches — same Common/Rare point structure
+  { id: "geocache_halloween_common", name: "Halloween Common Box Breaker", description: "Break open a common Halloween geocache", points: 75, isStackable: true, category: "stackable" },
+  { id: "geocache_halloween_rare", name: "Halloween Rare Box Breaker", description: "Break open a rare Halloween geocache", points: 125, isStackable: true, category: "stackable" },
+  // Merry Crisis geocaches — same Common/Rare point structure
+  { id: "geocache_merry_crisis_common", name: "Merry Crisis Common Box Breaker", description: "Break open a common Merry Crisis geocache", points: 75, isStackable: true, category: "stackable" },
+  { id: "geocache_merry_crisis_rare", name: "Merry Crisis Rare Box Breaker", description: "Break open a rare Merry Crisis geocache", points: 125, isStackable: true, category: "stackable" },
 ];
 
 /**
@@ -135,10 +143,24 @@ export const calculateStackableBadges = (
     }
   }
 
-  // Count rare geocaches for the geocache_rare stackable badge
-  const rareGeocacheCount = geocaches.filter((gc) => gc.tier === "Rare").length;
-  if (rareGeocacheCount > 0) {
-    maskCounts["geocache_rare"] = rareGeocacheCount;
+  // Count geocaches by series + tier for stackable badges
+  // Regular series (BB1, BB2, Shit Box) → geocache_common / geocache_rare
+  // Halloween → geocache_halloween_common / geocache_halloween_rare
+  // Merry Crisis → geocache_merry_crisis_common / geocache_merry_crisis_rare
+  const isRegularSeries = (s: GeocacheSeries) => s === "Bounty Box I" || s === "Bounty Box II" || s === "Shit Box";
+
+  for (const gc of geocaches) {
+    let badgeId: string;
+    if (gc.series === "Halloween") {
+      badgeId = gc.tier === "Rare" ? "geocache_halloween_rare" : "geocache_halloween_common";
+    } else if (gc.series === "Merry Crisis") {
+      badgeId = gc.tier === "Rare" ? "geocache_merry_crisis_rare" : "geocache_merry_crisis_common";
+    } else if (isRegularSeries(gc.series)) {
+      badgeId = gc.tier === "Rare" ? "geocache_rare" : "geocache_common";
+    } else {
+      continue;
+    }
+    maskCounts[badgeId] = (maskCounts[badgeId] ?? 0) + 1;
   }
 
   const badges: EarnedBadge[] = [];

@@ -8,6 +8,7 @@ import {
   BADGE_DEFINITIONS,
 } from "@/lib/domain/loserboard";
 import type { MeatbagNft, MaskColor } from "@/types/nft";
+import type { GeocacheNft, GeocacheTier, GeocacheSeries } from "@/types/geocache";
 import { getBaseYield } from "@/lib/domain/traits";
 
 const makeMockNft = (maskColor: MaskColor): MeatbagNft => ({
@@ -23,6 +24,27 @@ const makeMockNft = (maskColor: MaskColor): MeatbagNft => ({
   isListed: false,
   dailyYield: getBaseYield(maskColor),
   magicEdenUrl: "",
+});
+
+const makeMockGeocache = (
+  tier: GeocacheTier = "Common",
+  series: GeocacheSeries = "Bounty Box I",
+  overrides?: Partial<GeocacheNft>,
+): GeocacheNft => ({
+  mintAddress: `mock-gc-${Math.random()}`,
+  name: `GeoCaches #${Math.floor(Math.random() * 1000)}`,
+  imageUrl: "",
+  ownerWallet: "mock-owner",
+  tier,
+  series,
+  traits: [
+    { traitType: "Tier", value: tier },
+    { traitType: "Series", value: series },
+  ],
+  isBurned: false,
+  isListed: false,
+  magicEdenUrl: "",
+  ...overrides,
 });
 
 describe("determineTier", () => {
@@ -104,6 +126,79 @@ describe("calculateStackableBadges", () => {
     const badges = calculateStackableBadges([]);
     expect(badges).toHaveLength(0);
   });
+
+  it("returns common geocache badges for common geocaches", () => {
+    const geocaches = [
+      makeMockGeocache("Common"),
+      makeMockGeocache("Common"),
+      makeMockGeocache("Common"),
+    ];
+    const badges = calculateStackableBadges([], geocaches);
+
+    const commonBadge = badges.find((b) => b.badge.id === "geocache_common");
+    expect(commonBadge).toBeDefined();
+    expect(commonBadge!.count).toBe(3);
+  });
+
+  it("returns rare geocache badges for rare geocaches", () => {
+    const geocaches = [
+      makeMockGeocache("Rare"),
+      makeMockGeocache("Rare"),
+    ];
+    const badges = calculateStackableBadges([], geocaches);
+
+    const rareBadge = badges.find((b) => b.badge.id === "geocache_rare");
+    expect(rareBadge).toBeDefined();
+    expect(rareBadge!.count).toBe(2);
+  });
+
+  it("returns both common and rare geocache badges for mixed geocaches", () => {
+    const geocaches = [
+      makeMockGeocache("Common"),
+      makeMockGeocache("Common"),
+      makeMockGeocache("Rare"),
+    ];
+    const badges = calculateStackableBadges([], geocaches);
+
+    const commonBadge = badges.find((b) => b.badge.id === "geocache_common");
+    const rareBadge = badges.find((b) => b.badge.id === "geocache_rare");
+    expect(commonBadge).toBeDefined();
+    expect(commonBadge!.count).toBe(2);
+    expect(rareBadge).toBeDefined();
+    expect(rareBadge!.count).toBe(1);
+  });
+
+  it("returns special series geocache badges split by tier (Halloween, Merry Crisis)", () => {
+    const geocaches = [
+      makeMockGeocache("Common", "Halloween"),
+      makeMockGeocache("Rare", "Halloween"),
+      makeMockGeocache("Common", "Merry Crisis"),
+      makeMockGeocache("Rare", "Merry Crisis"),
+    ];
+    const badges = calculateStackableBadges([], geocaches);
+
+    // Halloween split by tier
+    const halloweenCommon = badges.find((b) => b.badge.id === "geocache_halloween_common");
+    const halloweenRare = badges.find((b) => b.badge.id === "geocache_halloween_rare");
+    expect(halloweenCommon).toBeDefined();
+    expect(halloweenCommon!.count).toBe(1);
+    expect(halloweenRare).toBeDefined();
+    expect(halloweenRare!.count).toBe(1);
+
+    // Merry Crisis split by tier
+    const mcCommon = badges.find((b) => b.badge.id === "geocache_merry_crisis_common");
+    const mcRare = badges.find((b) => b.badge.id === "geocache_merry_crisis_rare");
+    expect(mcCommon).toBeDefined();
+    expect(mcCommon!.count).toBe(1);
+    expect(mcRare).toBeDefined();
+    expect(mcRare!.count).toBe(1);
+
+    // Halloween/MC should NOT be counted in regular geocache buckets
+    const regularCommon = badges.find((b) => b.badge.id === "geocache_common");
+    const regularRare = badges.find((b) => b.badge.id === "geocache_rare");
+    expect(regularCommon).toBeUndefined();
+    expect(regularRare).toBeUndefined();
+  });
 });
 
 describe("calculateDeadPoints", () => {
@@ -149,8 +244,8 @@ describe("calculateLoserboardStats", () => {
 });
 
 describe("BADGE_DEFINITIONS", () => {
-  it("has exactly 37 badges", () => {
-    expect(BADGE_DEFINITIONS).toHaveLength(37);
+  it("has exactly 42 badges", () => {
+    expect(BADGE_DEFINITIONS).toHaveLength(42);
   });
 
   it("has unique IDs", () => {
