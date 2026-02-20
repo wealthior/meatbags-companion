@@ -15,6 +15,7 @@ import {
   Tag,
 } from "lucide-react";
 import { useAllNfts } from "@/hooks/use-nfts";
+import { useAllGeocaches } from "@/hooks/use-geocaches";
 import { useSolPrice } from "@/hooks/use-sol-price";
 import { useCollectionStats } from "@/hooks/use-collection-stats";
 import { useWalletStore } from "@/stores/wallet-store";
@@ -30,6 +31,7 @@ import type { MaskColor } from "@/types/nft";
 
 export default function DashboardPage() {
   const { data: nftData, isLoading: nftsLoading, isError: nftsError, refetch } = useAllNfts();
+  const { data: geocacheData } = useAllGeocaches();
   const { data: solPrice } = useSolPrice();
   const { data: collectionStats } = useCollectionStats();
   const wallets = useWalletStore((s) => s.wallets);
@@ -41,8 +43,8 @@ export default function DashboardPage() {
 
   const loserboardStats = useMemo(() => {
     if (!nftData?.nfts) return null;
-    return calculateLoserboardStats(nftData.nfts, [], isOriginalMinter);
-  }, [nftData, isOriginalMinter]);
+    return calculateLoserboardStats(nftData.nfts, [], isOriginalMinter, geocacheData?.geocaches ?? []);
+  }, [nftData, isOriginalMinter, geocacheData]);
 
   const traitDist = useMemo(() => {
     if (!nftData?.nfts) return [];

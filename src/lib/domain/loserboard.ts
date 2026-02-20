@@ -1,5 +1,6 @@
 import type { LoserboardTier, TierConfig, BadgeDefinition, UserLoserboardStats, EarnedBadge } from "@/types/loserboard";
 import type { MeatbagNft } from "@/types/nft";
+import type { GeocacheNft } from "@/types/geocache";
 import { TIER_CONFIGS, MASK_COLOR_CONFIG } from "@/lib/utils/constants";
 
 /**
@@ -119,10 +120,11 @@ const MASK_BADGE_MAP: Record<string, string> = {
 };
 
 /**
- * Calculate earned stackable badges from NFT holdings
+ * Calculate earned stackable badges from NFT holdings and geocache holdings
  */
 export const calculateStackableBadges = (
-  nfts: readonly MeatbagNft[]
+  nfts: readonly MeatbagNft[],
+  geocaches: readonly GeocacheNft[] = [],
 ): EarnedBadge[] => {
   const maskCounts: Record<string, number> = {};
 
@@ -131,6 +133,12 @@ export const calculateStackableBadges = (
     if (badgeId) {
       maskCounts[badgeId] = (maskCounts[badgeId] ?? 0) + 1;
     }
+  }
+
+  // Count rare geocaches for the geocache_rare stackable badge
+  const rareGeocacheCount = geocaches.filter((gc) => gc.tier === "Rare").length;
+  if (rareGeocacheCount > 0) {
+    maskCounts["geocache_rare"] = rareGeocacheCount;
   }
 
   const badges: EarnedBadge[] = [];
@@ -156,10 +164,12 @@ export const calculateDeadPoints = (badges: readonly EarnedBadge[]): number =>
  *
  * @param isOriginalMinter - Whether the wallet is an original minter (detected by loyalty-detector).
  *                           Used for OG Holder and Veteran badges.
+ * @param geocaches - Optional geocache holdings for geocache badge auto-detection.
  */
 const calculateAutoOneTimeBadges = (
   nfts: readonly MeatbagNft[],
   isOriginalMinter = false,
+  geocaches: readonly GeocacheNft[] = [],
 ): string[] => {
   const earned: string[] = [];
   if (nfts.length === 0) return earned;
@@ -188,6 +198,8 @@ const calculateAutoOneTimeBadges = (
   // Veteran — original minter holding since mint (Mint was Oct 15 2024, so 90+ days has passed)
   // For secondary buyers we can't determine hold duration yet, so only original minters qualify
   if (isOriginalMinter) earned.push("veteran");
+  // Geocacher — owns at least 1 geocache
+  if (geocaches.length >= 1) earned.push("geocacher");
 
   return earned;
 };
@@ -197,16 +209,18 @@ const calculateAutoOneTimeBadges = (
  *
  * @param isOriginalMinter - Whether the wallet minted at least one of its NFTs (from loyalty-detector).
  *                           Enables OG Holder and Veteran badges.
+ * @param geocaches - Optional geocache holdings for geocache badge auto-detection.
  */
 export const calculateLoserboardStats = (
   nfts: readonly MeatbagNft[],
   manualBadgeIds: readonly string[] = [],
   isOriginalMinter = false,
+  geocaches: readonly GeocacheNft[] = [],
 ): UserLoserboardStats => {
-  const stackableBadges = calculateStackableBadges(nfts);
+  const stackableBadges = calculateStackableBadges(nfts, geocaches);
 
-  // Auto-detect one-time badges from NFT data + minter status
-  const autoBadgeIds = calculateAutoOneTimeBadges(nfts, isOriginalMinter);
+  // Auto-detect one-time badges from NFT data + minter status + geocaches
+  const autoBadgeIds = calculateAutoOneTimeBadges(nfts, isOriginalMinter, geocaches);
   // Merge auto-detected + manually awarded (deduplicated)
   const allOneTimeIds = [...new Set([...autoBadgeIds, ...manualBadgeIds])];
 
