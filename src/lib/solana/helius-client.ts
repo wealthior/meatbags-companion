@@ -1,8 +1,9 @@
 import type { MeatbagNft, NftTrait } from "@/types/nft";
+import type { GeocacheNft, GeocacheTier, GeocacheSeries } from "@/types/geocache";
 import type { NftTransaction, TransactionType } from "@/types/transaction";
 import type { ApiResult } from "@/types/api";
 import { ok, err } from "@/types/api";
-import { COLLECTION_ADDRESS, heliusDasUrl, MAGICEDEN_ITEM_URL } from "@/lib/utils/constants";
+import { COLLECTION_ADDRESS, GEOCACHE_COLLECTION_ADDRESS, heliusDasUrl, MAGICEDEN_ITEM_URL } from "@/lib/utils/constants";
 import { getMaskColorFromTraits, isHonoraryNft, isSoulboundNft } from "@/lib/domain/traits";
 import { getBaseYield } from "@/lib/domain/traits";
 import { reportHeliusFailure, reportHeliusSuccess } from "./connection";
@@ -336,6 +337,200 @@ export const fetchTransactionHistory = async (
   }
 };
 
+/** Metaplex Core program ID — used by GeoCaches (MplCoreAsset) */
+const METAPLEX_CORE_PROGRAM = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+
+/** Known marketplace program IDs for buy/sell detection */
+const MARKETPLACE_PROGRAMS = new Set([
+  "M2mx93ekt1fmXSVkTrUL9xVFHkmME8HTUi5Cyc5aF7K",  // Magic Eden v2
+  "mmm3XBJg5gk8XJxEKBvdgptZz6SgK4tXvn36sodowMc",  // Magic Eden MMM
+  "MEisE1HzehtrDpAAT8PnLHjpSSkRYakotTuJRPjTpo8",   // Magic Eden v3
+  "TSWAPaqyCSx2KABk68Shruf4rp7CxcNi8hAsbdwmHbN",   // Tensor
+  "TCMPhJdwDryooaGtiocG1u3xcYbRpiJzb283XfCZsDp",    // Tensor cNFT
+  "TL1ST2iRBzuGTqLn1KXnGdSnEow62BzPnGiqyRXhWtW",   // Tensor listing
+  "hadeK9DLv9eA7ya5KCTqSvSvRZeJC3JgD5a9Y3CNbvu",   // Hadeswap
+]);
+
+/**
+ * Fetch geocache-specific transactions for a wallet.
+ *
+ * GeoCaches are Metaplex Core assets. The Helius Enhanced Transactions API
+ * does NOT recognize Core asset operations — it classifies them as "UNKNOWN".
+ * So we fetch ALL transactions (no type filter), paginate, and manually detect
+ * geocache-related ones by checking if the collection address appears in
+ * instruction accounts. Then we classify as BUY/SELL/BURN/TRANSFER.
+ *
+ * Paginates up to `maxPages` pages of 100 TXs each (default: 10 = 1000 TXs).
+ */
+export const fetchGeocacheTransactions = async (
+  apiKey: string,
+  address: string,
+  maxPages = 10,
+): Promise<ApiResult<NftTransaction[]>> => {
+  const PAGE_LIMIT = 100;
+
+  try {
+    const allTxns: NftTransaction[] = [];
+    let before: string | undefined;
+
+    for (let page = 0; page < maxPages; page++) {
+      const url = new URL(`https://api.helius.xyz/v0/addresses/${address}/transactions`);
+      url.searchParams.set("api-key", apiKey);
+      url.searchParams.set("limit", String(PAGE_LIMIT));
+      if (before) url.searchParams.set("before", before);
+
+      const response = await fetch(url.toString());
+      if (!response.ok) {
+        reportHeliusFailure();
+        return err("HELIUS_UNAVAILABLE", `Helius API error: ${response.status}`, true);
+      }
+      reportHeliusSuccess();
+
+      const rawTxns = (await response.json()) as RawHeliusTx[];
+      if (rawTxns.length === 0) break;
+
+      // Filter to geocache-related transactions
+      for (const raw of rawTxns) {
+        if (!isGeocacheTx(raw, GEOCACHE_COLLECTION_ADDRESS)) continue;
+        const parsed = parseGeocacheTx(raw, address);
+        if (parsed) allTxns.push(parsed);
+      }
+
+      // Pagination: use last signature as cursor
+      before = rawTxns[rawTxns.length - 1]?.signature;
+      if (rawTxns.length < PAGE_LIMIT) break; // last page
+    }
+
+    // Deduplicate + sort
+    const seen = new Set<string>();
+    const unique = allTxns.filter((tx) => {
+      if (seen.has(tx.signature)) return false;
+      seen.add(tx.signature);
+      return true;
+    });
+    unique.sort((a, b) => b.timestamp - a.timestamp);
+
+    return ok(unique);
+  } catch (error) {
+    reportHeliusFailure();
+    return err(
+      "NETWORK_ERROR",
+      error instanceof Error ? error.message : "Failed to fetch geocache transactions",
+      true,
+    );
+  }
+};
+
+/** Raw Helius enhanced transaction shape (minimal, for geocache parsing) */
+interface RawHeliusTx {
+  signature: string;
+  type: string;
+  source: string;
+  timestamp: number;
+  fee: number;
+  feePayer: string;
+  nativeTransfers?: Array<{ fromUserAccount: string; toUserAccount: string; amount: number }>;
+  tokenTransfers?: Array<{ fromUserAccount: string; toUserAccount: string; mint: string }>;
+  accountData?: Array<{ account: string; nativeBalanceChange: number }>;
+  instructions?: Array<{ programId: string; accounts?: string[] }>;
+  events?: {
+    nft?: {
+      buyer?: string;
+      seller?: string;
+      amount?: number;
+      nfts?: Array<{ mint: string }>;
+      source?: string;
+    };
+  };
+}
+
+/**
+ * Check if a raw Helius tx is geocache-related.
+ * A tx is geocache-related if the collection address appears in any instruction's accounts.
+ */
+const isGeocacheTx = (tx: RawHeliusTx, collectionAddress: string): boolean =>
+  tx.instructions?.some((inst) => inst.accounts?.includes(collectionAddress)) ?? false;
+
+/**
+ * Parse a raw geocache-related Helius tx into our NftTransaction type.
+ * Determines type from program + SOL flow:
+ * - Marketplace program/source + significant SOL flow = BUY or SELL
+ * - Core program + wallet is feePayer + tiny SOL change = BURN (wallet opened it)
+ * - Core program + different feePayer = TRANSFER (mint/claim from raid)
+ */
+const parseGeocacheTx = (tx: RawHeliusTx, walletAddress: string): NftTransaction | null => {
+  try {
+    const hasMarketplace =
+      MARKETPLACE_PROGRAMS.has(tx.source) ||
+      tx.instructions?.some((inst) => MARKETPLACE_PROGRAMS.has(inst.programId)) === true;
+
+    // Calculate total SOL the wallet spent or received
+    const walletSolChange = tx.accountData?.find((a) => a.account === walletAddress)?.nativeBalanceChange ?? 0;
+    const absSolChange = Math.abs(walletSolChange) / 1e9;
+
+    // Determine the geocache mint from instruction accounts
+    // For Core assets, the mint is usually the first account in the Core program instruction
+    const coreInst = tx.instructions?.find((inst) => inst.programId === METAPLEX_CORE_PROGRAM);
+    const mintAddress = coreInst?.accounts?.[0] ?? "";
+
+    // Classify transaction type
+    let type: TransactionType;
+    let fromWallet = "";
+    let toWallet = "";
+    let solAmount = 0;
+
+    if (hasMarketplace && absSolChange > 0.001) {
+      // Marketplace trade — determine buy vs sell from SOL flow
+      if (walletSolChange < 0) {
+        // Wallet lost SOL → bought
+        type = "BUY";
+        fromWallet = "marketplace";
+        toWallet = walletAddress;
+        solAmount = absSolChange;
+      } else {
+        // Wallet gained SOL → sold
+        type = "SELL";
+        fromWallet = walletAddress;
+        toWallet = "marketplace";
+        solAmount = absSolChange;
+      }
+    } else if (coreInst && absSolChange < 0.005) {
+      // Core program tx with no significant SOL change.
+      // If the wallet is the fee payer, it initiated the action → BURN (opening geocache).
+      // If someone else pays the fee, it's a mint/claim → TRANSFER.
+      if (tx.feePayer === walletAddress) {
+        type = "BURN";
+        fromWallet = walletAddress;
+        toWallet = "";
+      } else {
+        type = "TRANSFER";
+        fromWallet = tx.feePayer;
+        toWallet = walletAddress;
+      }
+    } else {
+      type = "TRANSFER";
+      fromWallet = tx.feePayer;
+      toWallet = walletAddress;
+    }
+
+    return {
+      signature: tx.signature,
+      type,
+      mintAddress,
+      nftName: "",
+      solAmount,
+      solPriceUsd: 0,
+      usdAmount: 0,
+      timestamp: tx.timestamp,
+      fromWallet,
+      toWallet,
+      marketplace: hasMarketplace ? (tx.source || "Marketplace") : "Core",
+    };
+  } catch {
+    return null;
+  }
+};
+
 /**
  * Map Helius transaction type strings to our TransactionType.
  */
@@ -454,5 +649,231 @@ const parseHeliusTransaction = (tx: unknown): NftTransaction | null => {
     };
   } catch {
     return null;
+  }
+};
+
+// ─── GeoCaches ────────────────────────────────────────────────────────────────
+
+/** Valid geocache tier values */
+const VALID_GEOCACHE_TIERS = new Set<string>(["Common", "Rare"]);
+
+/** Valid geocache series values */
+const VALID_GEOCACHE_SERIES = new Set<string>(["Bounty Box I", "Bounty Box II", "Shit Box"]);
+
+/**
+ * Check if a DAS asset belongs to the GeoCaches collection
+ */
+const isGeocacheAsset = (asset: HeliusAsset): boolean =>
+  asset.grouping?.some(
+    (g) => g.group_key === "collection" && g.group_value === GEOCACHE_COLLECTION_ADDRESS
+  ) ?? false;
+
+/**
+ * Parse a Helius DAS asset into our GeocacheNft type
+ */
+const parseGeocacheAsset = (asset: HeliusAsset): GeocacheNft | null => {
+  try {
+    const name = asset.content?.metadata?.name ?? "Unknown GeoCaches";
+    const imageUrl =
+      asset.content?.links?.image ??
+      asset.content?.files?.[0]?.uri ??
+      "";
+
+    const traits: NftTrait[] = (asset.content?.metadata?.attributes ?? []).map(
+      (attr) => ({
+        traitType: attr.trait_type,
+        value: attr.value,
+      })
+    );
+
+    // Extract tier and series from traits
+    const tierTrait = traits.find((t) => t.traitType === "Tier")?.value ?? "Common";
+    const seriesTrait = traits.find((t) => t.traitType === "Series")?.value ?? "Bounty Box I";
+
+    const tier: GeocacheTier = VALID_GEOCACHE_TIERS.has(tierTrait)
+      ? (tierTrait as GeocacheTier)
+      : "Common";
+    const series: GeocacheSeries = VALID_GEOCACHE_SERIES.has(seriesTrait)
+      ? (seriesTrait as GeocacheSeries)
+      : "Bounty Box I";
+
+    const delegate = asset.ownership.delegate;
+    const marketplace = detectMarketplace(delegate);
+    const isListed = marketplace !== null;
+
+    return {
+      mintAddress: asset.id,
+      name,
+      imageUrl,
+      ownerWallet: asset.ownership.owner,
+      tier,
+      series,
+      traits,
+      isBurned: asset.burnt === true,
+      isListed,
+      listedMarketplace: marketplace ?? undefined,
+      magicEdenUrl: `${MAGICEDEN_ITEM_URL}/${asset.id}`,
+    };
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Fetch all GeoCaches NFTs owned by a wallet address using Helius DAS getAssetsByOwner.
+ * Same pagination strategy as fetchNftsByOwner but filters by GeoCaches collection.
+ */
+export const fetchGeocachesByOwner = async (
+  apiKey: string,
+  ownerAddress: string,
+): Promise<ApiResult<{ items: GeocacheNft[]; total: number }>> => {
+  const PAGE_LIMIT = 1000;
+
+  try {
+    const allGeocaches: GeocacheNft[] = [];
+    let page = 1;
+
+    while (true) {
+      const response = await fetch(heliusDasUrl(apiKey), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: "meatbags-companion-geocaches",
+          method: "getAssetsByOwner",
+          params: {
+            ownerAddress,
+            page,
+            limit: PAGE_LIMIT,
+            displayOptions: {
+              showFungible: false,
+              showNativeBalance: false,
+              showZeroBalance: false,
+            },
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        reportHeliusFailure();
+        return err("HELIUS_UNAVAILABLE", `Helius API error: ${response.status} — ${body.slice(0, 200)}`, true);
+      }
+
+      let data: HeliusDasResponse;
+      try {
+        const raw = await response.json();
+        if (raw.error) {
+          reportHeliusFailure();
+          return err("HELIUS_UNAVAILABLE", `Helius RPC error: ${raw.error.message ?? JSON.stringify(raw.error)}`, true);
+        }
+        data = raw;
+      } catch (parseError) {
+        return err("HELIUS_UNAVAILABLE", `Failed to parse Helius response: ${parseError}`, true);
+      }
+      reportHeliusSuccess();
+
+      // Client-side filter: only keep GeoCaches assets
+      const geocacheAssets = data.result.items.filter(isGeocacheAsset);
+
+      let skipped = 0;
+      for (const item of geocacheAssets) {
+        const parsed = parseGeocacheAsset(item);
+        if (parsed) {
+          allGeocaches.push(parsed);
+        } else {
+          skipped++;
+          console.warn(`[helius] Failed to parse GeoCaches asset: ${item.id} (${item.content?.metadata?.name ?? "unknown"})`);
+        }
+      }
+
+      if (skipped > 0) {
+        console.warn(`[helius] Skipped ${skipped}/${geocacheAssets.length} GeoCaches assets for ${ownerAddress} (page ${page})`);
+      }
+
+      if (data.result.items.length < PAGE_LIMIT) break;
+      page++;
+    }
+
+    console.log(`[helius] Found ${allGeocaches.length} GeoCaches for ${ownerAddress.slice(0, 8)}...`);
+    return ok({ items: allGeocaches, total: allGeocaches.length });
+  } catch (error) {
+    reportHeliusFailure();
+    return err(
+      "NETWORK_ERROR",
+      error instanceof Error ? error.message : "Failed to fetch GeoCaches",
+      true
+    );
+  }
+};
+
+/**
+ * Fetch ALL GeoCaches mint addresses that belong to the collection using searchAssets.
+ * This returns ALL mints (including burned ones), so we can correctly identify
+ * geocache-related transactions even when the wallet no longer holds them.
+ * Uses DAS searchAssets with collection grouping filter + burnt option.
+ */
+export const fetchAllGeocacheMints = async (
+  apiKey: string,
+): Promise<ApiResult<Set<string>>> => {
+  const PAGE_LIMIT = 1000;
+
+  try {
+    const allMints = new Set<string>();
+    let page = 1;
+
+    while (true) {
+      const response = await fetch(heliusDasUrl(apiKey), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: "meatbags-companion-gc-mints",
+          method: "searchAssets",
+          params: {
+            grouping: ["collection", GEOCACHE_COLLECTION_ADDRESS],
+            page,
+            limit: PAGE_LIMIT,
+            burnt: true,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        reportHeliusFailure();
+        return err("HELIUS_UNAVAILABLE", `Helius API error: ${response.status} — ${body.slice(0, 200)}`, true);
+      }
+
+      let data: HeliusDasResponse;
+      try {
+        const raw = await response.json();
+        if (raw.error) {
+          reportHeliusFailure();
+          return err("HELIUS_UNAVAILABLE", `Helius RPC error: ${raw.error.message ?? JSON.stringify(raw.error)}`, true);
+        }
+        data = raw;
+      } catch (parseError) {
+        return err("HELIUS_UNAVAILABLE", `Failed to parse Helius response: ${parseError}`, true);
+      }
+      reportHeliusSuccess();
+
+      for (const item of data.result.items) {
+        allMints.add(item.id);
+      }
+
+      if (data.result.items.length < PAGE_LIMIT) break;
+      page++;
+    }
+
+    console.log(`[helius] GeoCaches collection: ${allMints.size} total mints (including burned)`);
+    return ok(allMints);
+  } catch (error) {
+    reportHeliusFailure();
+    return err(
+      "NETWORK_ERROR",
+      error instanceof Error ? error.message : "Failed to fetch GeoCaches mints",
+      true
+    );
   }
 };

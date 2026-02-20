@@ -75,6 +75,15 @@ export const PUBLIC_RPC_URL = "https://api.mainnet-beta.solana.com";
 /** CoinGecko API base URL */
 export const COINGECKO_API_URL = "https://api.coingecko.com/api/v3";
 
+/** GeoCaches collection address (raid rewards) */
+export const GEOCACHE_COLLECTION_ADDRESS = "BXoFDUpxbrpAMVD8ivFRqCB6wGpLvhEC5o5BAFoaKgCU";
+
+/** GeoCaches MagicEden collection slug */
+export const GEOCACHE_MAGICEDEN_SLUG = "meatbags_geocache";
+
+/** GeoCaches MagicEden collection URL */
+export const GEOCACHE_MAGICEDEN_COLLECTION_URL = "https://magiceden.io/marketplace/meatbags_geocache";
+
 /** Verification message template for leaderboard */
 export const VERIFICATION_MESSAGE = (walletAddress: string, timestamp: number) =>
   `MeatBags Companion: Verify ownership of ${walletAddress} at ${timestamp}`;
