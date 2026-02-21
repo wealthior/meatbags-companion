@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.5](https://github.com/wealthior/meatbags-companion/compare/v0.1.4...v0.1.5) (2026-02-21)
+
+
+### Features
+
+* enhance badge handling and transaction fetching ([4b97c00](https://github.com/wealthior/meatbags-companion/commit/4b97c00196593fe55d5b7bfae4144425e227252f))
+
 ### 0.1.4 (2026-02-20)
 
 
