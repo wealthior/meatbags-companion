@@ -10,7 +10,11 @@ export type AppErrorCode =
   | "VALIDATION_ERROR"
   | "DB_ERROR"
   | "VERIFICATION_FAILED"
-  | "DEADBRUV_API_ERROR";
+  | "DEADBRUV_API_ERROR"
+  | "PAYMENT_NOT_FOUND"
+  | "PAYMENT_INVALID"
+  | "PAYMENT_INSUFFICIENT"
+  | "CONFIG_ERROR";
 
 export interface AppError {
   readonly code: AppErrorCode;

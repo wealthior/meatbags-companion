@@ -10,6 +10,8 @@ const clientEnvSchema = z.object({
     .enum(["mainnet-beta", "devnet", "testnet"])
     .default("mainnet-beta"),
   NEXT_PUBLIC_COLLECTION_ADDRESS: z.string().min(1),
+  NEXT_PUBLIC_PAYMENT_WALLET: z.string().optional(),
+  NEXT_PUBLIC_HELIUS_KEY: z.string().optional(),
 });
 
 /**
@@ -33,4 +35,6 @@ export const getServerEnv = () => {
 export const clientEnv = clientEnvSchema.parse({
   NEXT_PUBLIC_SOLANA_NETWORK: process.env.NEXT_PUBLIC_SOLANA_NETWORK,
   NEXT_PUBLIC_COLLECTION_ADDRESS: process.env.NEXT_PUBLIC_COLLECTION_ADDRESS,
+  NEXT_PUBLIC_PAYMENT_WALLET: process.env.NEXT_PUBLIC_PAYMENT_WALLET,
+  NEXT_PUBLIC_HELIUS_KEY: process.env.NEXT_PUBLIC_HELIUS_KEY,
 });

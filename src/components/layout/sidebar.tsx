@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Crosshair,
 } from "lucide-react";
 import { useUiStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils/cn";
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
   { href: "/wallets", icon: Wallet, label: "Wallets", shortLabel: "WA" },
   { href: "/geocaches", icon: Compass, label: "GeoCaches", shortLabel: "GC" },
   { href: "/interactions", icon: Network, label: "Interactions", shortLabel: "IN" },
+  { href: "/sniper-bot", icon: Crosshair, label: "Sniper Bot", shortLabel: "SB" },
 ] as const;
 
 /** Desktop sidebar — hidden on mobile */

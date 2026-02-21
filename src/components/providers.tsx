@@ -9,6 +9,7 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { heliusRpcUrl, PUBLIC_RPC_URL } from "@/lib/utils/constants";
+import { clientEnv } from "@/lib/utils/env";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -32,7 +33,7 @@ export function Providers({ children }: ProvidersProps) {
   const [queryClient] = useState(makeQueryClient);
 
   const endpoint = useMemo(() => {
-    const heliusKey = process.env.NEXT_PUBLIC_HELIUS_KEY;
+    const heliusKey = clientEnv.NEXT_PUBLIC_HELIUS_KEY;
     return heliusKey ? heliusRpcUrl(heliusKey) : PUBLIC_RPC_URL;
   }, []);
 
