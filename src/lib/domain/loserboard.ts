@@ -1,7 +1,8 @@
 import type { LoserboardTier, TierConfig, BadgeDefinition, UserLoserboardStats, EarnedBadge } from "@/types/loserboard";
 import type { MeatbagNft } from "@/types/nft";
-import type { GeocacheNft, GeocacheSeries } from "@/types/geocache";
-import { TIER_CONFIGS, MASK_COLOR_CONFIG } from "@/lib/utils/constants";
+import type { GeocacheNft } from "@/types/geocache";
+import type { DeadbruvEarnedBadge } from "@/types/deadbruv";
+import { TIER_CONFIGS } from "@/lib/utils/constants";
 
 /**
  * Determine the loserboard tier for a given Dead Points amount
@@ -42,137 +43,209 @@ export const calculateTierProgress = (
   return { tier, progress, pointsToNextTier };
 };
 
-/** Badge definitions for the MeatBags Loserboard (33 total) */
-export const BADGE_DEFINITIONS: readonly BadgeDefinition[] = [
-  // One-time badges
-  { id: "shitlord", name: "Shitlord", description: "Become a verified shitlord", points: 500, isStackable: false, category: "one-time" },
-  { id: "raider", name: "Raider", description: "Complete your first raid", points: 1_000, isStackable: false, category: "one-time" },
-  { id: "collectoor", name: "Collectoor", description: "Collect your first MeatBag", points: 750, isStackable: false, category: "one-time" },
-  { id: "degen", name: "Degen", description: "Prove your degen status", points: 1_500, isStackable: false, category: "one-time" },
-  { id: "og_holder", name: "OG Holder", description: "Original minter", points: 2_000, isStackable: false, category: "one-time" },
-  { id: "staker", name: "Staker", description: "Stake your first MeatBag", points: 500, isStackable: false, category: "one-time" },
-  { id: "veteran", name: "Veteran", description: "Hold for 90+ days", points: 3_000, isStackable: false, category: "one-time" },
-  { id: "whale", name: "Whale", description: "Hold 50+ MeatBags", points: 5_000, isStackable: false, category: "one-time" },
-  { id: "diamond_hands", name: "Diamond Hands", description: "Never sold a MeatBag", points: 4_000, isStackable: false, category: "one-time" },
-  { id: "community_legend", name: "Community Legend", description: "Outstanding community contribution", points: 7_700, isStackable: false, category: "one-time" },
-  { id: "survivor", name: "Survivor", description: "Survive a market crash while holding", points: 2_500, isStackable: false, category: "one-time" },
-  { id: "preparer", name: "Preparer", description: "Accumulate 100K prep points", points: 1_500, isStackable: false, category: "one-time" },
-  { id: "hoarder", name: "Hoarder", description: "Hold 100+ MeatBags", points: 7_000, isStackable: false, category: "one-time" },
-  { id: "social_butterfly", name: "Social Butterfly", description: "Active in all social channels", points: 1_000, isStackable: false, category: "one-time" },
-  { id: "geocacher", name: "Geocacher", description: "Find your first geocache", points: 750, isStackable: false, category: "one-time" },
-  { id: "rare_hunter", name: "Rare Hunter", description: "Own a rare trait MeatBag", points: 2_000, isStackable: false, category: "one-time" },
+// ─── BADGE DEFINITIONS (exact 34 badges from gitbook) ─────────────────────
+// IDs match deadbruv naming: name.toLowerCase().replace(/\s+/g, "_")
 
-  // Stackable badges (per trait/mask ownership) — one per mask color
-  // Common masks
-  { id: "mask_red", name: "Red Mask", description: "Own a MeatBag with Red Mask", points: 75, isStackable: true, category: "stackable" },
-  { id: "mask_purple", name: "Purple Mask", description: "Own a MeatBag with Purple Mask", points: 75, isStackable: true, category: "stackable" },
-  { id: "mask_orange", name: "Orange Mask", description: "Own a MeatBag with Orange Mask", points: 75, isStackable: true, category: "stackable" },
-  { id: "mask_white", name: "White Mask", description: "Own a MeatBag with White Mask", points: 75, isStackable: true, category: "stackable" },
-  { id: "mask_yellow", name: "Yellow Mask", description: "Own a MeatBag with Yellow Mask", points: 75, isStackable: true, category: "stackable" },
-  { id: "mask_lightblue", name: "Light Blue Mask", description: "Own a MeatBag with Light Blue Mask", points: 75, isStackable: true, category: "stackable" },
-  { id: "mask_green", name: "Green Mask", description: "Own a MeatBag with Green Mask", points: 75, isStackable: true, category: "stackable" },
-  { id: "mask_teal", name: "Teal Mask", description: "Own a MeatBag with Teal Mask", points: 75, isStackable: true, category: "stackable" },
-  // Uncommon masks
-  { id: "mask_olive", name: "Olive Mask", description: "Own a MeatBag with Olive Mask", points: 125, isStackable: true, category: "stackable" },
-  { id: "mask_blue", name: "Blue Mask", description: "Own a MeatBag with Blue Mask", points: 125, isStackable: true, category: "stackable" },
-  { id: "mask_black", name: "Black Mask", description: "Own a MeatBag with Black Mask", points: 125, isStackable: true, category: "stackable" },
-  { id: "mask_burgundy", name: "Burgundy Mask", description: "Own a MeatBag with Burgundy Mask", points: 125, isStackable: true, category: "stackable" },
-  { id: "mask_grey", name: "Grey Mask", description: "Own a MeatBag with Grey Mask", points: 125, isStackable: true, category: "stackable" },
-  { id: "mask_pink", name: "Pink Mask", description: "Own a MeatBag with Pink Mask", points: 125, isStackable: true, category: "stackable" },
-  // Rare masks
-  { id: "mask_orchid", name: "Orchid Mask", description: "Own a MeatBag with Orchid Mask", points: 250, isStackable: true, category: "stackable" },
-  { id: "mask_navy", name: "Navy Mask", description: "Own a MeatBag with Navy Mask", points: 250, isStackable: true, category: "stackable" },
-  { id: "mask_brown", name: "Brown Mask", description: "Own a MeatBag with Brown Mask", points: 300, isStackable: true, category: "stackable" },
-  // Legendary masks (Gold and GH-Gold are the same mask — both map to GH-Gold)
-  { id: "mask_ghgold", name: "GH-Gold Mask", description: "Own a MeatBag with GH-Gold Mask", points: 1_500, isStackable: true, category: "stackable" },
-  // Mythic masks
-  { id: "mask_1of1", name: "1/1 Mask", description: "Own a MeatBag with a 1/1 Mask", points: 7_000, isStackable: true, category: "stackable" },
-  { id: "mask_nothing", name: "Maskless", description: "Own a MeatBag with No Mask", points: 7_700, isStackable: true, category: "stackable" },
-  // Geocache Box Breaker badges — stackable, split by tier
-  // Regular geocaches (Bounty Box I, Bounty Box II, Shit Box)
-  { id: "geocache_common", name: "Common Box Breaker", description: "Break open a common loot box", points: 75, isStackable: true, category: "stackable" },
-  { id: "geocache_rare", name: "Rare Box Breaker", description: "Break open a rare loot box", points: 125, isStackable: true, category: "stackable" },
-  // Halloween geocaches — same Common/Rare point structure
-  { id: "geocache_halloween_common", name: "Halloween Common Box Breaker", description: "Break open a common Halloween geocache", points: 75, isStackable: true, category: "stackable" },
-  { id: "geocache_halloween_rare", name: "Halloween Rare Box Breaker", description: "Break open a rare Halloween geocache", points: 125, isStackable: true, category: "stackable" },
-  // Merry Crisis geocaches — same Common/Rare point structure
-  { id: "geocache_merry_crisis_common", name: "Merry Crisis Common Box Breaker", description: "Break open a common Merry Crisis geocache", points: 75, isStackable: true, category: "stackable" },
-  { id: "geocache_merry_crisis_rare", name: "Merry Crisis Rare Box Breaker", description: "Break open a rare Merry Crisis geocache", points: 125, isStackable: true, category: "stackable" },
+export const BADGE_DEFINITIONS: readonly BadgeDefinition[] = [
+  // ── One-Time Badges (20) ──
+  // Core achievements
+  { id: "shitlord", name: "Shitlord", description: "Complete Shit & Run", points: 1_500, isStackable: false, category: "one-time" },
+  { id: "raider", name: "Raider", description: "Complete 10 Raids", points: 1_500, isStackable: false, category: "one-time" },
+  { id: "billionaire", name: "Billionaire", description: "Own 20 Meatbags", points: 1_000, isStackable: false, category: "one-time" },
+  { id: "illegal_alien", name: "Illegal Alien", description: "Own 51 Meatbags", points: 2_500, isStackable: false, category: "one-time" },
+  { id: "world_fucker", name: "World Fucker", description: "Win Who F*cked the World", points: 1_500, isStackable: false, category: "one-time" },
+  { id: "hoarder", name: "Hoarder", description: "Own Every Meatbag Mask Color", points: 2_000, isStackable: false, category: "one-time" },
+  { id: "collectoor", name: "Collectoor", description: "Own 10 Meatbags", points: 1_250, isStackable: false, category: "one-time" },
+  { id: "silly_sausage", name: "Silly Sausage", description: "Lose 3 Rise of the Meatbags Raids", points: 500, isStackable: false, category: "one-time" },
+  { id: "trait_maxi", name: "Trait Maxi", description: "Own 5 of the same trait", points: 750, isStackable: false, category: "one-time" },
+  { id: "lucky_duck", name: "Lucky Duck", description: "Pull a Rare Meatbag from a Geocache", points: 1_250, isStackable: false, category: "one-time" },
+  // Raid / Event participation badges (from deadbruv API)
+  { id: "ass_savers", name: "Ass Savers", description: "Participate in Ass Savers event", points: 1_000, isStackable: false, category: "one-time" },
+  { id: "edge_of_extinction", name: "Edge of Extinction", description: "Participate in Edge of Extinction event", points: 1_000, isStackable: false, category: "one-time" },
+  { id: "hot_nuggets", name: "Hot Nuggets", description: "Participate in Hot Nuggets event", points: 1_000, isStackable: false, category: "one-time" },
+  { id: "paranormal_profiles", name: "Paranormal Profiles", description: "Participate in Paranormal Profiles event", points: 1_000, isStackable: false, category: "one-time" },
+  { id: "sheet_suggestions", name: "Sheet Suggestions", description: "Participate in Sheet Suggestions event", points: 1_000, isStackable: false, category: "one-time" },
+  { id: "the_end_is_near", name: "The End is Near", description: "Participate in The End is Near event", points: 1_000, isStackable: false, category: "one-time" },
+  { id: "the_wrapture", name: "The Wrapture", description: "Participate in The Wrapture event", points: 1_000, isStackable: false, category: "one-time" },
+  { id: "tower_of_terror", name: "Tower of Terror", description: "Participate in Tower of Terror event", points: 1_000, isStackable: false, category: "one-time" },
+  { id: "yotm", name: "YOTM", description: "Participate in YOTM event", points: 1_000, isStackable: false, category: "one-time" },
+  { id: "ishit", name: "iShit", description: "Participate in iShit event", points: 1_000, isStackable: false, category: "one-time" },
+
+  // ── Stackable Badges (24) ──
+  // General
+  { id: "prepper", name: "Prepper", description: "Own 1 Meatbag", points: 1_000, isStackable: true, category: "stackable" },
+  // Mask-based (20 masks)
+  { id: "ketchup_king", name: "Ketchup King", description: "Own a Meatbag with a Red Mask", points: 1_000, isStackable: true, category: "stackable" },
+  { id: "hillbilly", name: "Hillbilly", description: "Own a Meatbag with a Purple Mask", points: 1_025, isStackable: true, category: "stackable" },
+  { id: "fallout_division", name: "Fallout Division", description: "Own a Meatbag with a Orange Mask", points: 1_050, isStackable: true, category: "stackable" },
+  { id: "ghostface", name: "Ghostface", description: "Own a Meatbag with a White Mask", points: 1_075, isStackable: true, category: "stackable" },
+  { id: "banana_zone", name: "Banana Zone", description: "Own a Meatbag with a Yellow Mask", points: 1_100, isStackable: true, category: "stackable" },
+  { id: "ice_cold", name: "Ice Cold", description: "Own a Meatbag with a Light Blue Mask", points: 1_125, isStackable: true, category: "stackable" },
+  { id: "mutant", name: "Mutant", description: "Own a Meatbag with a Green Mask", points: 1_150, isStackable: true, category: "stackable" },
+  { id: "sludge_slinger", name: "Sludge Slinger", description: "Own a Meatbag with a Teal Mask", points: 1_175, isStackable: true, category: "stackable" },
+  { id: "ex-military", name: "Ex-Military", description: "Own a Meatbag with a Olive Mask", points: 1_200, isStackable: true, category: "stackable" },
+  { id: "down_bad", name: "Down Bad", description: "Own a Meatbag with a Blue Mask", points: 1_225, isStackable: true, category: "stackable" },
+  { id: "doom_daddy", name: "Doom Daddy", description: "Own a Meatbag with a Black Mask", points: 1_250, isStackable: true, category: "stackable" },
+  { id: "meat_muncher", name: "Meat Muncher", description: "Own a Meatbag with a Burgundy Mask", points: 1_275, isStackable: true, category: "stackable" },
+  { id: "tinfoil_titan", name: "Tinfoil Titan", description: "Own a Meatbag with a Grey Mask", points: 1_300, isStackable: true, category: "stackable" },
+  { id: "brain_rot", name: "Brain Rot", description: "Own a Meatbag with a Pink Mask", points: 1_325, isStackable: true, category: "stackable" },
+  { id: "rich_elite", name: "Rich Elite", description: "Own a Meatbag with a Orchid Mask", points: 1_350, isStackable: true, category: "stackable" },
+  { id: "deep_fried", name: "Deep Fried", description: "Own a Meatbag with a Navy Mask", points: 1_375, isStackable: true, category: "stackable" },
+  { id: "roachmen", name: "Roachmen", description: "Own a Meatbag with a Brown Mask", points: 1_400, isStackable: true, category: "stackable" },
+  { id: "golden_horde", name: "Golden Horde", description: "Own a Meatbag with a Gold Mask", points: 4_200, isStackable: true, category: "stackable" },
+  { id: "warlord", name: "Warlord", description: "Own a Meatbag with a 1/1 Mask", points: 7_000, isStackable: true, category: "stackable" },
+  { id: "maskless", name: "Maskless", description: "Own a Meatbag with No Mask", points: 7_700, isStackable: true, category: "stackable" },
+  // Special stackable
+  { id: "diamond_handed", name: "Diamond Handed", description: "Own a Meatbag you Minted", points: 500, isStackable: true, category: "stackable" },
+  // Geocache Box Breakers
+  { id: "common_box_breaker", name: "Common Box Breaker", description: "Break open a common loot box", points: 75, isStackable: true, category: "stackable" },
+  { id: "rare_box_breaker", name: "Rare Box Breaker", description: "Break open a rare loot box", points: 125, isStackable: true, category: "stackable" },
 ];
 
-/**
- * Map mask colors to their badge IDs
- */
-const MASK_BADGE_MAP: Record<string, string> = {
-  Red: "mask_red",
-  Purple: "mask_purple",
-  Orange: "mask_orange",
-  White: "mask_white",
-  Yellow: "mask_yellow",
-  "Light Blue": "mask_lightblue",
-  Green: "mask_green",
-  Teal: "mask_teal",
-  Olive: "mask_olive",
-  Blue: "mask_blue",
-  Black: "mask_black",
-  Burgundy: "mask_burgundy",
-  Grey: "mask_grey",
-  Pink: "mask_pink",
-  Orchid: "mask_orchid",
-  Navy: "mask_navy",
-  Brown: "mask_brown",
-  Gold: "mask_ghgold",
-  "GH-Gold": "mask_ghgold",
-  "1/1": "mask_1of1",
-  Nothing: "mask_nothing",
-};
+/** Normalize a deadbruv badge name to our badge ID format */
+const normalizeBadgeId = (name: string): string =>
+  name.toLowerCase().replace(/\s+/g, "_");
+
+/** O(1) lookup map for badge definitions by ID */
+const BADGE_DEFINITIONS_MAP = new Map<string, BadgeDefinition>(
+  BADGE_DEFINITIONS.map((b) => [b.id, b]),
+);
 
 /**
- * Calculate earned stackable badges from NFT holdings and geocache holdings
+ * Reverse-lookup: normalized deadbruv name → our BadgeDefinition.
+ * Handles cases where names differ slightly (e.g. "Ex-Military" → "ex-military").
+ * Also adds the normalized name as a secondary key for fuzzy matching.
  */
-export const calculateStackableBadges = (
+const BADGE_BY_NORMALIZED_NAME = new Map<string, BadgeDefinition>(
+  BADGE_DEFINITIONS.map((b) => [normalizeBadgeId(b.name), b]),
+);
+
+/** Resolve a deadbruv badge name to our BadgeDefinition (tries ID first, then normalized name) */
+const resolveBadgeDefinition = (deadbruvName: string): BadgeDefinition | undefined => {
+  const normalized = normalizeBadgeId(deadbruvName);
+  return BADGE_DEFINITIONS_MAP.get(normalized) ?? BADGE_BY_NORMALIZED_NAME.get(normalized);
+};
+
+/** Map MaskColor → badge ID (matching deadbruv badge names from gitbook) */
+const MASK_BADGE_MAP: Record<string, string> = {
+  Red: "ketchup_king",
+  Purple: "hillbilly",
+  Orange: "fallout_division",
+  White: "ghostface",
+  Yellow: "banana_zone",
+  "Light Blue": "ice_cold",
+  Green: "mutant",
+  Teal: "sludge_slinger",
+  Olive: "ex-military",
+  Blue: "down_bad",
+  Black: "doom_daddy",
+  Burgundy: "meat_muncher",
+  Grey: "tinfoil_titan",
+  Pink: "brain_rot",
+  Orchid: "rich_elite",
+  Navy: "deep_fried",
+  Brown: "roachmen",
+  Gold: "golden_horde",
+  "GH-Gold": "golden_horde",
+  "1/1": "warlord",
+  Nothing: "maskless",
+};
+
+// ─── BLOCKCHAIN AUTO-DETECTION ────────────────────────────────────────────
+
+/**
+ * Calculate all badges that can be auto-detected from blockchain data.
+ * Used as supplement when deadbruv is primary, or as full source when unavailable.
+ *
+ * SoulBound Honorary NFTs (airdropped 1/1s, #10001+) are excluded from all
+ * badge calculations — they are not regular collection items.
+ */
+export const calculateBadgesFromBlockchain = (
   nfts: readonly MeatbagNft[],
   geocaches: readonly GeocacheNft[] = [],
 ): EarnedBadge[] => {
-  const maskCounts: Record<string, number> = {};
+  const badges: EarnedBadge[] = [];
 
-  for (const nft of nfts) {
+  // Exclude SoulBound Honorary NFTs — they're airdropped and shouldn't count
+  const eligibleNfts = nfts.filter((n) => !n.isSoulbound);
+
+  if (eligibleNfts.length === 0 && geocaches.length === 0) return badges;
+
+  // ── Stackable: Prepper (1000 pts per owned Meatbag) ──
+  if (eligibleNfts.length > 0) {
+    const prepper = BADGE_DEFINITIONS_MAP.get("prepper");
+    if (prepper) badges.push({ badge: prepper, count: eligibleNfts.length });
+  }
+
+  // ── Stackable: Mask-based badges (count per mask color) ──
+  const maskCounts: Record<string, number> = {};
+  for (const nft of eligibleNfts) {
     const badgeId = MASK_BADGE_MAP[nft.maskColor];
     if (badgeId) {
       maskCounts[badgeId] = (maskCounts[badgeId] ?? 0) + 1;
     }
   }
-
-  // Count geocaches by series + tier for stackable badges
-  // Regular series (BB1, BB2, Shit Box) → geocache_common / geocache_rare
-  // Halloween → geocache_halloween_common / geocache_halloween_rare
-  // Merry Crisis → geocache_merry_crisis_common / geocache_merry_crisis_rare
-  const isRegularSeries = (s: GeocacheSeries) => s === "Bounty Box I" || s === "Bounty Box II" || s === "Shit Box";
-
-  for (const gc of geocaches) {
-    let badgeId: string;
-    if (gc.series === "Halloween") {
-      badgeId = gc.tier === "Rare" ? "geocache_halloween_rare" : "geocache_halloween_common";
-    } else if (gc.series === "Merry Crisis") {
-      badgeId = gc.tier === "Rare" ? "geocache_merry_crisis_rare" : "geocache_merry_crisis_common";
-    } else if (isRegularSeries(gc.series)) {
-      badgeId = gc.tier === "Rare" ? "geocache_rare" : "geocache_common";
-    } else {
-      continue;
-    }
-    maskCounts[badgeId] = (maskCounts[badgeId] ?? 0) + 1;
+  for (const [badgeId, count] of Object.entries(maskCounts)) {
+    const badge = BADGE_DEFINITIONS_MAP.get(badgeId);
+    if (badge && count > 0) badges.push({ badge, count });
   }
 
-  const badges: EarnedBadge[] = [];
-  for (const [badgeId, count] of Object.entries(maskCounts)) {
-    const badge = BADGE_DEFINITIONS.find((b) => b.id === badgeId);
-    if (badge && count > 0) {
-      badges.push({ badge, count });
-    }
+  // ── One-time: Collectoor (Own 10 Meatbags) ──
+  if (eligibleNfts.length >= 10) {
+    const badge = BADGE_DEFINITIONS_MAP.get("collectoor");
+    if (badge) badges.push({ badge, count: 1 });
+  }
+
+  // ── One-time: Billionaire (Own 20 Meatbags) ──
+  if (eligibleNfts.length >= 20) {
+    const badge = BADGE_DEFINITIONS_MAP.get("billionaire");
+    if (badge) badges.push({ badge, count: 1 });
+  }
+
+  // ── One-time: Illegal Alien (Own 51 Meatbags) ──
+  if (eligibleNfts.length >= 51) {
+    const badge = BADGE_DEFINITIONS_MAP.get("illegal_alien");
+    if (badge) badges.push({ badge, count: 1 });
+  }
+
+  // ── One-time: Hoarder (Own Every Mask Color — all 20 unique) ──
+  const uniqueMasks = new Set<string>();
+  for (const nft of eligibleNfts) {
+    uniqueMasks.add(nft.maskColor === "GH-Gold" ? "Gold" : nft.maskColor);
+  }
+  if (uniqueMasks.size >= 20) {
+    const badge = BADGE_DEFINITIONS_MAP.get("hoarder");
+    if (badge) badges.push({ badge, count: 1 });
+  }
+
+  // ── One-time: Trait Maxi (Own 5 of same trait) ──
+  const hasFiveOfSame = Object.values(maskCounts).some((c) => c >= 5);
+  if (hasFiveOfSame) {
+    const badge = BADGE_DEFINITIONS_MAP.get("trait_maxi");
+    if (badge) badges.push({ badge, count: 1 });
+  }
+
+  // ── Stackable: Geocache Box Breakers (only opened/burned count) ──
+  let commonGcCount = 0;
+  let rareGcCount = 0;
+  for (const gc of geocaches) {
+    if (!gc.isBurned) continue; // Skip held (unopened) geocaches
+    if (gc.tier === "Common") commonGcCount++;
+    else if (gc.tier === "Rare") rareGcCount++;
+  }
+  if (commonGcCount > 0) {
+    const badge = BADGE_DEFINITIONS_MAP.get("common_box_breaker");
+    if (badge) badges.push({ badge, count: commonGcCount });
+  }
+  if (rareGcCount > 0) {
+    const badge = BADGE_DEFINITIONS_MAP.get("rare_box_breaker");
+    if (badge) badges.push({ badge, count: rareGcCount });
   }
 
   return badges;
 };
+
+// ─── CALCULATION FUNCTIONS ─────────────────────────────────────────────────
 
 /**
  * Calculate total Dead Points from earned badges
@@ -181,77 +254,98 @@ export const calculateDeadPoints = (badges: readonly EarnedBadge[]): number =>
   badges.reduce((total, { badge, count }) => total + badge.points * count, 0);
 
 /**
- * Auto-detect one-time badges that can be determined from NFT data alone.
- * Badges like Shitlord, Raider, OG Holder etc. need external verification.
- *
- * @param isOriginalMinter - Whether the wallet is an original minter (detected by loyalty-detector).
- *                           Used for OG Holder and Veteran badges.
- * @param geocaches - Optional geocache holdings for geocache badge auto-detection.
+ * Calculate earned stackable badges from NFT holdings and geocache holdings.
+ * Used in the blockchain-only fallback path.
  */
-const calculateAutoOneTimeBadges = (
+export const calculateStackableBadges = (
   nfts: readonly MeatbagNft[],
-  isOriginalMinter = false,
   geocaches: readonly GeocacheNft[] = [],
-): string[] => {
-  const earned: string[] = [];
-  if (nfts.length === 0) return earned;
-
-  const maskRarities = new Set(nfts.map((n) => MASK_COLOR_CONFIG[n.maskColor]?.rarity));
-  const totalDailyYield = nfts.reduce((s, n) => s + (MASK_COLOR_CONFIG[n.maskColor]?.dailyYield ?? 0), 0);
-  const hasStaked = nfts.some((n) => n.isStaked);
-  const hasListed = nfts.some((n) => n.isListed);
-
-  // Collectoor — own at least 1 MeatBag
-  if (nfts.length >= 1) earned.push("collectoor");
-  // Staker — at least 1 staked
-  if (hasStaked) earned.push("staker");
-  // Whale — 50+ MeatBags
-  if (nfts.length >= 50) earned.push("whale");
-  // Hoarder — 100+ MeatBags
-  if (nfts.length >= 100) earned.push("hoarder");
-  // Rare Hunter — owns Rare, Legendary, or Mythic mask
-  if (maskRarities.has("Rare") || maskRarities.has("Legendary") || maskRarities.has("Mythic")) earned.push("rare_hunter");
-  // Preparer — 100K+ total daily yield
-  if (totalDailyYield >= 100_000) earned.push("preparer");
-  // Diamond Hands — 5+ NFTs, none listed
-  if (nfts.length >= 5 && !hasListed) earned.push("diamond_hands");
-  // OG Holder — original minter still holds
-  if (isOriginalMinter) earned.push("og_holder");
-  // Veteran — original minter holding since mint (Mint was Oct 15 2024, so 90+ days has passed)
-  // For secondary buyers we can't determine hold duration yet, so only original minters qualify
-  if (isOriginalMinter) earned.push("veteran");
-  // Geocacher — owns at least 1 geocache
-  if (geocaches.length >= 1) earned.push("geocacher");
-
-  return earned;
+): EarnedBadge[] => {
+  return calculateBadgesFromBlockchain(nfts, geocaches).filter((b) => b.badge.isStackable);
 };
 
 /**
- * Calculate complete loserboard stats for a set of NFTs
- *
- * @param isOriginalMinter - Whether the wallet minted at least one of its NFTs (from loyalty-detector).
- *                           Enables OG Holder and Veteran badges.
- * @param geocaches - Optional geocache holdings for geocache badge auto-detection.
+ * Calculate complete loserboard stats from blockchain data only (fallback).
+ * Used when deadbruv.com is unavailable.
  */
 export const calculateLoserboardStats = (
   nfts: readonly MeatbagNft[],
-  manualBadgeIds: readonly string[] = [],
-  isOriginalMinter = false,
+  _manualBadgeIds: readonly string[] = [],
+  _isOriginalMinter = false,
   geocaches: readonly GeocacheNft[] = [],
 ): UserLoserboardStats => {
-  const stackableBadges = calculateStackableBadges(nfts, geocaches);
+  const allBadges = calculateBadgesFromBlockchain(nfts, geocaches);
+  const deadPoints = calculateDeadPoints(allBadges);
+  const { tier, progress, pointsToNextTier } = calculateTierProgress(deadPoints);
 
-  // Auto-detect one-time badges from NFT data + minter status + geocaches
-  const autoBadgeIds = calculateAutoOneTimeBadges(nfts, isOriginalMinter, geocaches);
-  // Merge auto-detected + manually awarded (deduplicated)
-  const allOneTimeIds = [...new Set([...autoBadgeIds, ...manualBadgeIds])];
+  return {
+    deadPoints,
+    currentTier: tier,
+    tierProgress: progress,
+    pointsToNextTier,
+    badges: allBadges,
+  };
+};
 
-  const oneTimeBadges: EarnedBadge[] = allOneTimeIds
-    .map((id) => BADGE_DEFINITIONS.find((b) => b.id === id))
-    .filter((b): b is BadgeDefinition => b !== undefined)
-    .map((badge) => ({ badge, count: 1 }));
+/**
+ * Calculate loserboard stats from deadbruv.com badge data (PRIMARY path).
+ *
+ * Merges deadbruv badges with blockchain-detected badges:
+ * - Uses our BADGE_DEFINITIONS to determine stackability (not just deadbruv category)
+ * - For each badge, takes the MAX count between deadbruv and blockchain
+ * - Adds blockchain-only badges that deadbruv doesn't have
+ *
+ * This ensures multi-wallet users get correct counts even if deadbruv
+ * hasn't synced all wallets, and auto-detectable badges are always present.
+ */
+export const calculateLoserboardStatsFromDeadbruv = (
+  earnedBadges: readonly DeadbruvEarnedBadge[],
+  nfts: readonly MeatbagNft[] = [],
+  geocaches: readonly GeocacheNft[] = [],
+): UserLoserboardStats => {
+  // 1. Build earned badges map from deadbruv data
+  const mergedMap = new Map<string, EarnedBadge>();
 
-  const allBadges = [...oneTimeBadges, ...stackableBadges];
+  for (const { badge, userBadge } of earnedBadges) {
+    // Resolve via robust lookup: tries ID match first, then normalized name
+    const ourDef = resolveBadgeDefinition(badge.name);
+    const badgeId = ourDef?.id ?? normalizeBadgeId(badge.name);
+
+    // Determine stackability from OUR definitions (covers Diamond Handed, Box Breakers)
+    // Fall back to deadbruv category if badge is unknown to us
+    const isStackable = ourDef ? ourDef.isStackable : badge.category === "IndividualNFTBased";
+    const count = isStackable ? Math.max(userBadge.traitCount, 1) : 1;
+
+    mergedMap.set(badgeId, {
+      badge: {
+        id: badgeId,
+        name: ourDef?.name ?? badge.name,
+        description: ourDef?.description ?? badge.description,
+        points: ourDef?.points ?? badge.points,
+        isStackable,
+        category: isStackable ? "stackable" as const : "one-time" as const,
+        imageUrl: badge.imageURL,
+        badgeType: badge.type,
+        badgeCategory: badge.category,
+      },
+      count,
+    });
+  }
+
+  // 2. Calculate blockchain-detectable badges and merge (take MAX count)
+  const blockchainBadges = calculateBadgesFromBlockchain(nfts, geocaches);
+  for (const bcBadge of blockchainBadges) {
+    const existing = mergedMap.get(bcBadge.badge.id);
+    if (!existing) {
+      // Badge not in deadbruv → add from blockchain
+      mergedMap.set(bcBadge.badge.id, bcBadge);
+    } else if (bcBadge.badge.isStackable && bcBadge.count > existing.count) {
+      // Blockchain detected more → use higher count (keep deadbruv's imageUrl)
+      mergedMap.set(bcBadge.badge.id, { ...existing, count: bcBadge.count });
+    }
+  }
+
+  const allBadges = [...mergedMap.values()];
   const deadPoints = calculateDeadPoints(allBadges);
   const { tier, progress, pointsToNextTier } = calculateTierProgress(deadPoints);
 

@@ -11,20 +11,15 @@ const XIcon = ({ size = 12 }: { size?: number }) => (
 
 export function Footer() {
   return (
-    <footer className="border-t border-border-default bg-bg-surface/40 backdrop-blur-sm px-4 md:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
-      <div className="flex items-center gap-2 text-[10px] text-text-muted uppercase tracking-wider">
+    <footer className="h-12 border-t border-border-default bg-bg-surface/40 backdrop-blur-sm px-4 md:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div className="flex items-center gap-2 text-xs text-text-muted uppercase tracking-wider">
         <span>MeatBags Companion</span>
-        <span className="text-neon-green/60">
-          v{packageJson.version}
-          {process.env.NEXT_PUBLIC_GIT_SHA && (
-            <span className="text-text-muted ml-1">({process.env.NEXT_PUBLIC_GIT_SHA})</span>
-          )}
-        </span>
+        <span className="text-neon-green/60">v{packageJson.version}</span>
       </div>
 
       <div className="flex items-center gap-4">
-        <span className="text-[10px] text-text-muted">
-          Made by <span className="text-rust">Wealthior</span>
+        <span className="text-xs text-text-muted">
+          Made by <span className="text-rust font-medium">Wealthior</span>
         </span>
         <div className="flex items-center gap-2">
           <a
@@ -33,7 +28,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="text-text-muted hover:text-neon-green transition-colors"
           >
-            <XIcon size={12} />
+            <XIcon size={16} />
           </a>
           {/* <a
             href="https://github.com/wealthior"
@@ -41,7 +36,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="text-text-muted hover:text-neon-green transition-colors"
           >
-            <Github size={12} />
+            <Github size={16} />
           </a> */}
         </div>
       </div>

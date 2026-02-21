@@ -172,8 +172,9 @@ export default function DashboardPage() {
               accent="green"
             />
             <StatCard
-              label="Listed"
+              label="Total Listed"
               value={formatNumber(collectionStats.listedCount)}
+              subValue="on marketplace"
               accent="rust"
             />
             <StatCard

@@ -4,6 +4,7 @@ import { fetchGeocacheTransactions } from "@/lib/solana/helius-client";
 import { isValidSolanaAddress } from "@/lib/utils/validation";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30; // Allow longer execution for pagination-heavy requests
 
 /**
  * GET /api/helius/geocache-transactions?address=<address>
@@ -30,5 +31,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result, { status: 502 });
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, {
+    headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" },
+  });
 }

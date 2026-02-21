@@ -14,6 +14,9 @@ export interface BadgeDefinition {
   readonly points: number;
   readonly isStackable: boolean;
   readonly category: "one-time" | "stackable";
+  readonly imageUrl?: string;
+  readonly badgeType?: "REVOKABLE" | "PERMANENT";
+  readonly badgeCategory?: "IndividualNFTBased" | "MultiNFTBased" | "CollectionBased" | "ParticipationBased";
 }
 
 export interface EarnedBadge {

@@ -15,7 +15,7 @@ interface NftGridProps {
   walletNames?: Record<string, string>;
 }
 
-type SortOption = "name" | "yield-desc" | "yield-asc" | "wallet";
+type SortOption = "number-desc" | "number-asc" | "yield-desc" | "yield-asc" | "wallet";
 type ViewMode = "grid" | "gallery" | "compact";
 
 export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
@@ -56,10 +56,19 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
       result = result.filter((n) => n.ownerWallet === selectedWallet);
     }
 
+    // Extract number from NFT name (e.g. "MEATBAG #2668" → 2668)
+    const getNumber = (name: string): number => {
+      const match = name.match(/#(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    };
+
     // Sort
     switch (sortBy) {
-      case "name":
-        result.sort((a, b) => a.name.localeCompare(b.name));
+      case "number-desc":
+        result.sort((a, b) => getNumber(b.name) - getNumber(a.name));
+        break;
+      case "number-asc":
+        result.sort((a, b) => getNumber(a.name) - getNumber(b.name));
         break;
       case "yield-desc":
         result.sort((a, b) => b.dailyYield - a.dailyYield);
@@ -121,9 +130,10 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             className="bg-bg-surface border border-border-default rounded-md px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-neon-green/30 cursor-pointer flex-1 sm:flex-none"
           >
+            <option value="number-desc"># (High → Low)</option>
+            <option value="number-asc"># (Low → High)</option>
             <option value="yield-desc">Yield (High → Low)</option>
             <option value="yield-asc">Yield (Low → High)</option>
-            <option value="name">Name (A → Z)</option>
             <option value="wallet">Wallet</option>
           </select>
         </div>
@@ -137,11 +147,11 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
             <p className="text-[10px] text-text-muted uppercase tracking-wider mb-2">
               Mask Color
             </p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedMask("all")}
                 className={cn(
-                  "px-2 py-1 rounded text-[10px] border transition-colors cursor-pointer",
+                  "px-3 py-1.5 rounded-md text-xs border transition-colors cursor-pointer",
                   selectedMask === "all"
                     ? "border-neon-green/30 text-neon-green bg-neon-green/10"
                     : "border-border-default text-text-muted hover:text-text-primary"
@@ -159,7 +169,7 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
                       setSelectedMask(selectedMask === color ? "all" : color)
                     }
                     className={cn(
-                      "flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors cursor-pointer",
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs border transition-colors cursor-pointer",
                       selectedMask === color
                         ? "border-neon-green/30 bg-neon-green/10"
                         : "border-border-default hover:border-border-accent"
@@ -181,11 +191,11 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
               <p className="text-[10px] text-text-muted uppercase tracking-wider mb-2">
                 Wallet
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedWallet("all")}
                   className={cn(
-                    "px-2 py-1 rounded text-[10px] border transition-colors cursor-pointer",
+                    "px-3 py-1.5 rounded-md text-xs border transition-colors cursor-pointer",
                     selectedWallet === "all"
                       ? "border-neon-green/30 text-neon-green bg-neon-green/10"
                       : "border-border-default text-text-muted hover:text-text-primary"
@@ -200,7 +210,7 @@ export function NftGrid({ nfts, walletNames = {} }: NftGridProps) {
                       setSelectedWallet(selectedWallet === addr ? "all" : addr)
                     }
                     className={cn(
-                      "px-2 py-1 rounded text-[10px] border transition-colors cursor-pointer",
+                      "px-3 py-1.5 rounded-md text-xs border transition-colors cursor-pointer",
                       selectedWallet === addr
                         ? "border-neon-green/30 text-neon-green bg-neon-green/10"
                         : "border-border-default text-text-muted hover:text-text-primary"

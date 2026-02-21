@@ -9,7 +9,8 @@ export type AppErrorCode =
   | "NETWORK_ERROR"
   | "VALIDATION_ERROR"
   | "DB_ERROR"
-  | "VERIFICATION_FAILED";
+  | "VERIFICATION_FAILED"
+  | "DEADBRUV_API_ERROR";
 
 export interface AppError {
   readonly code: AppErrorCode;

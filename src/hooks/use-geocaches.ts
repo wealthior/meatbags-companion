@@ -143,11 +143,24 @@ export const useAllGeocaches = () => {
 };
 
 /**
+ * Fetch a single wallet's geocache transaction history
+ */
+const fetchWalletGeocacheTxns = async (address: string): Promise<NftTransaction[]> => {
+  const response = await fetch(`/api/helius/geocache-transactions?address=${address}`);
+  const data: ApiResult<NftTransaction[]> = await response.json();
+  if (!data.success) throw new Error(data.error.message);
+  return data.data;
+};
+
+/**
  * Fetch geocache-related transaction history for all tracked wallets.
  * Uses the dedicated /api/helius/geocache-transactions endpoint which
  * paginates through ALL wallet transactions and manually identifies
  * Metaplex Core (geocache) operations — Helius classifies these as "UNKNOWN"
  * so standard type-filtered queries miss them entirely.
+ *
+ * Fetches up to 2 wallets concurrently to speed up multi-wallet loading
+ * while staying within Helius rate limits.
  */
 export const useGeocacheTransactions = () => {
   const wallets = useWalletStore((s) => s.wallets);
@@ -159,23 +172,30 @@ export const useGeocacheTransactions = () => {
       if (addresses.length === 0) return [];
 
       const allTxns: NftTransaction[] = [];
+      const CONCURRENCY = 2; // Fetch 2 wallets in parallel
 
-      // Fetch geocache transactions for each wallet sequentially to avoid rate limits
-      for (let i = 0; i < addresses.length; i++) {
-        const addr = addresses[i];
-        try {
-          const response = await fetch(`/api/helius/geocache-transactions?address=${addr}`);
-          const data: ApiResult<NftTransaction[]> = await response.json();
-          if (data.success) {
-            allTxns.push(...data.data);
-            console.log(`[geocaches] Wallet ${i + 1}/${addresses.length} (${addr.slice(0, 8)}...) → ${data.data.length} geocache txns`);
+      // Process wallets in batches of CONCURRENCY
+      for (let i = 0; i < addresses.length; i += CONCURRENCY) {
+        const batch = addresses.slice(i, i + CONCURRENCY);
+        const results = await Promise.allSettled(
+          batch.map(async (addr) => {
+            const txns = await fetchWalletGeocacheTxns(addr);
+            console.log(`[geocaches] ${addr.slice(0, 8)}... → ${txns.length} geocache txns`);
+            return txns;
+          }),
+        );
+
+        for (const result of results) {
+          if (result.status === "fulfilled") {
+            allTxns.push(...result.value);
+          } else {
+            console.error("[geocaches] Wallet fetch failed:", result.reason);
           }
-        } catch (error) {
-          console.error(`[geocaches] Failed to fetch txns for ${addr.slice(0, 8)}...`, error);
         }
 
-        if (i < addresses.length - 1) {
-          await delay(400);
+        // Small delay between batches only (not between individual requests)
+        if (i + CONCURRENCY < addresses.length) {
+          await delay(200);
         }
       }
 
@@ -193,6 +213,7 @@ export const useGeocacheTransactions = () => {
       });
     },
     enabled: addresses.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes (matches other hooks)
+    retry: 2,
   });
 };

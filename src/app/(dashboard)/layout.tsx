@@ -30,7 +30,7 @@ export default function DashboardLayout({
         className="transition-[margin-left] duration-200"
       >
         <Header />
-        <main className="p-4 md:p-6 min-h-[calc(100vh-56px-49px)]">{children}</main>
+        <main className="p-4 md:p-6 min-h-[calc(100vh-56px-40px)]">{children}</main>
         <Footer />
       </div>
       {/* Mobile: no margin. Desktop: sidebar pushes content */}
