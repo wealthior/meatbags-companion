@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.6](https://github.com/wealthior/meatbags-companion/compare/v0.1.5...v0.1.6) (2026-02-21)
+
+
+### Features
+
+* implement sniper bot payment verification and UI integration ([be5b11c](https://github.com/wealthior/meatbags-companion/commit/be5b11ce99d514adc24acf3878b461160e29d6e6))
+
 ### [0.1.5](https://github.com/wealthior/meatbags-companion/compare/v0.1.4...v0.1.5) (2026-02-21)
 
 

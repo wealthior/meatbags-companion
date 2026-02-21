@@ -1,6 +1,6 @@
 {
   "name": "meatbags-companion",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "description": "DEGEN companion app for the MeatBags NFT collection on Solana",
   "license": "MIT",
